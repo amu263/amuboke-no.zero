@@ -143,3 +143,10 @@ Per AGENTS.md §7:
 - ✅ Rate limit thresholds not hardcoded in client
 - ✅ Build output is deterministic (same source → same hash)
 - ✅ Media tokens from `POST /api/media-token` (future backend)
+
+
+---
+Last trigger: 2026-08-22T20:23:36.222Z
+
+---
+Last trigger: 2026-08-22T20:23:40.852Z
