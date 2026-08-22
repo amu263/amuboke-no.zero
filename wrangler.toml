@@ -1,4 +1,5 @@
 name = "amuboke-no-zero"
+main = "workers-site/index.js"
 workers_dev = false
 
 [site]
