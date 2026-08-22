@@ -89,8 +89,8 @@ export const palettes: Record<ThemeName, Palette> = {
     border: 'rgb(232 168 62 / 0.22)',
     scrim: 'rgb(0 0 0 / 0.32)',
     scrimStrong: 'rgb(9 11 14 / 0.82)',
-    // 苍苍蓝 50% 透明（柔和的雾蓝色调）
-    grid: 'rgba(175, 200, 220, 0.50)',
+    // 琥珀金 12% 透明（温暖不刺眼，与主题色呼应）
+    grid: 'rgba(232, 168, 62, 0.12)',
     // 纸质：磨砂玻璃 — 明日方舟风格：更深更暗的面板
     glassBlur: '8px',
     glass: 'rgba(9, 11, 14, 0.85)',

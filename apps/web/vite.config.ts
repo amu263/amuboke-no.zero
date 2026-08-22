@@ -202,7 +202,8 @@ export default defineConfig({
       webp: {
         quality: 90,
         effort: 4,
-      }
+      },
+      exclude: ['**/portrait-hero.png', '**/portrait-hero.jpg', '**/portrait-hero.jpeg']
     } as any),
   ],
   ssgOptions,

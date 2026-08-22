@@ -75,7 +75,7 @@ const channelLinks = [
         </div>
       </div>
       <div class="home-page__hero-portrait">
-        <img src="/images/home/portrait-hero.png" alt="Creator portrait" width="1254" height="1254" loading="eager" fetchpriority="high" decoding="sync" />
+        <img src="/img/portrait-hero.png" alt="Creator portrait" width="1254" height="1254" loading="eager" fetchpriority="high" decoding="sync" />
         <div class="home-page__portrait-overlay">
           <GlitchText class="home-page__portrait-label">// ARCHIVE OWNER</GlitchText>
         </div>

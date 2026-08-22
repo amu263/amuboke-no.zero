@@ -465,3 +465,53 @@
    的 body::before / html::before 方案。配合 .v-application 在 @layer base 内的
    transparent override 即可，不再需要 layer 外 !important hack。
    ────────────────────────────────────────────────────────────────────────── */
+
+
+/* ──────────────────────────────────────────────────────────────────────────
+   深色模式滚动条样式 — 琥珀金色调，更易辨认
+   ────────────────────────────────────────────────────────────────────────── */
+.v-theme--dark {
+  /* Webkit 滚动条 */
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  ::-webkit-scrollbar-track {
+    background: rgba(232, 168, 62, 0.08);
+  }
+  ::-webkit-scrollbar-thumb {
+    background: rgba(232, 168, 62, 0.35);
+    border-radius: 4px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: rgba(232, 168, 62, 0.55);
+  }
+  ::-webkit-scrollbar-corner {
+    background: transparent;
+  }
+  
+  /* Firefox 滚动条 */
+  scrollbar-width: thin;
+  scrollbar-color: rgba(232, 168, 62, 0.35) rgba(232, 168, 62, 0.08);
+}
+
+/* 亮色模式滚动条 — 保持低调 */
+.v-theme--light {
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  ::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.05);
+  }
+  ::-webkit-scrollbar-thumb {
+    background: rgba(0, 0, 0, 0.20);
+    border-radius: 4px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: rgba(0, 0, 0, 0.35);
+  }
+  
+  scrollbar-width: thin;
+  scrollbar-color: rgba(0, 0, 0, 0.20) rgba(0, 0, 0, 0.05);
+}

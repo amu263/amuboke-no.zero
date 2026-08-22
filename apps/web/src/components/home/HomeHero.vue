@@ -10,7 +10,7 @@ import { BILIBILI_PROFILE_URL } from '@/data/social'
       <nav class="home-hero__channels" aria-label="主页内容频道"><RouterLink to="/projects">折腾</RouterLink><RouterLink to="/posts">观察</RouterLink><RouterLink to="/listen">听见</RouterLink><RouterLink to="/gallery">看见</RouterLink></nav>
       <a class="home-hero__bilibili" :href="BILIBILI_PROFILE_URL" target="_blank" rel="noopener noreferrer">Bilibili<svg viewBox="0 0 20 20" aria-hidden="true" focusable="false"><path d="M7 5h8v8" /><path d="M5 15 15 5" /></svg></a>
     </div>
-    <div class="home-hero__portrait"><img src="/images/home/portrait-hero.png" alt="Creator portrait" width="1254" height="1254" loading="eager" fetchpriority="high" decoding="sync" /></div>
+    <div class="home-hero__portrait"><img src="/img/portrait-hero.png" alt="Creator portrait" width="1254" height="1254" loading="eager" fetchpriority="high" decoding="sync" /></div>
   </header>
 </template>
 <style scoped>
