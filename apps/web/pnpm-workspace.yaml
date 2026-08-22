@@ -1,0 +1,11 @@
+# AGENTS.md §5 #12: pnpm 11 用 allowBuilds（不是 package.json 里的 pnpm.onlyBuiltDependencies）
+# 增删依赖用 `pnpm install --no-frozen-lockfile`，否则会因 lockfile 不同步退出。
+allowBuilds:
+  '@parcel/watcher': false
+  cwebp-bin: set this to true or false
+  esbuild: true
+  gifsicle: set this to true or false
+  jpegtran-bin: set this to true or false
+  mozjpeg: set this to true or false
+  optipng-bin: set this to true or false
+  pngquant-bin: set this to true or false

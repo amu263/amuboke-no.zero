@@ -1,0 +1,4 @@
+// AGENTS.md §5 — Vuetify SCSS 入口
+@use 'vuetify/settings' with (
+  $reset: false
+);

@@ -1,0 +1,27 @@
+{
+  "slug": "iceland-winter",
+  "title": "冰岛 · 冬",
+  "date": "2024-12-20",
+  "summary": "冬天去冰岛的五天，每天都被风、雪和极光轮着教训。",
+  "cover": "/images/gallery/iceland-winter/cover.jpg",
+  "photos": [
+    {
+      "src": "/images/gallery/iceland-winter/01.jpg",
+      "alt": "黑沙滩上的冰块",
+      "caption": "Reynisfjara 黑沙滩，海浪打上来之前先打到冰上。",
+      "exif": { "camera": "Sony A7M3", "lens": "24-70 f/2.8", "iso": 800 }
+    },
+    {
+      "src": "/images/gallery/iceland-winter/02.jpg",
+      "alt": "极光下的草帽山",
+      "caption": "Kirkjufell，凌晨两点，kp=4。",
+      "exif": { "camera": "Sony A7M3", "lens": "16-35 f/4", "iso": 3200 }
+    },
+    {
+      "src": "/images/gallery/iceland-winter/03.jpg",
+      "alt": "蓝湖温泉的蒸汽",
+      "caption": "Blue Lagoon，最不像人间的一小时。",
+      "exif": { "camera": "iPhone 15 Pro", "iso": 100 }
+    }
+  ]
+}

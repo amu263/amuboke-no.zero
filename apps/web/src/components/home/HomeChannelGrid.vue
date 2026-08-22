@@ -1,0 +1,16 @@
+<script setup lang="ts">
+import type { Channel, ChannelContentItem, ContentSummary } from '@/content/build-time-index'
+defineProps<{ channels: readonly { name: Channel; items: readonly ChannelContentItem[]; description: string }[]; summary: ContentSummary }>()
+const routes: Record<Channel, string> = { 折腾: '/projects', 观察: '/posts', 听见: '/listen', 看见: '/gallery' }
+const labels: Record<Channel, string> = { 折腾: '#TINKER', 观察: '#OBSERVE', 听见: '#LISTEN', 看见: '#SEE' }
+const counts: Record<Channel, keyof ContentSummary> = { 折腾: 'projects', 观察: 'posts', 听见: 'listens', 看见: 'galleries' }
+</script>
+<template>
+  <section class="home-channels" aria-labelledby="home-channels-title">
+    <div class="home-section-heading"><span class="heading" data-level="8">FOUR CHANNELS / FIXED ORDER</span></div>
+    <div class="home-channel-grid"><RouterLink v-for="channel in channels" :key="channel.name" :to="routes[channel.name]" class="home-channel-card"><h3>{{ channel.name }}</h3><span class="home-channel-card__label">{{ labels[channel.name] }}</span><span class="home-channel-card__count">{{ summary[counts[channel.name]] }} entries</span><p>{{ channel.description }}</p><span class="home-channel-card__arrow" aria-hidden="true">↗</span></RouterLink></div>
+  </section>
+</template>
+<style scoped>
+.home-channels { position: relative; } .home-section-heading { display: flex; align-items: baseline; justify-content: space-between; gap: var(--theme-spacing-md); margin-bottom: var(--theme-spacing-md); } .home-section-heading h2 { margin: 0; font-size: var(--theme-font-size-lg); } .home-channel-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: var(--theme-spacing-md); } .home-channel-card { position: relative; display: flex; min-height: 190px; flex-direction: column; padding: var(--theme-spacing-lg); border: 1px solid var(--theme-border); border-radius: var(--theme-radius-lg); background: transparent; color: var(--theme-on-surface); text-decoration: none; transition: transform 180ms ease, border-color 180ms ease, box-shadow 180ms ease; animation: home-rise 320ms 1240ms cubic-bezier(.2,.8,.2,1) both; } .home-channel-card:hover, .home-channel-card:focus-visible { border-color: var(--theme-primary); box-shadow: var(--theme-shadow-md); transform: translateY(-3px); } .home-channel-card__label, .home-channel-card__count { font-family: var(--theme-font-mono); font-size: var(--theme-font-size-xs); } .home-channel-card__label { color: var(--theme-primary); } .home-channel-card h3 { margin: var(--theme-spacing-md) 0 var(--theme-spacing-xs); font-size: var(--theme-font-size-xl); } .home-channel-card__count { opacity: .58; } .home-channel-card p { margin: auto 0 0; color: var(--theme-on-surface); font-size: var(--theme-font-size-sm); opacity: .72; word-break: keep-all; line-break: strict; } .home-channel-card__arrow { position: absolute; top: var(--theme-spacing-lg); right: var(--theme-spacing-lg); color: var(--theme-primary); font-size: var(--theme-font-size-xl); } @keyframes home-rise { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } } @media (prefers-reduced-motion: reduce) { .home-channel-card { animation: none; } }
+</style>

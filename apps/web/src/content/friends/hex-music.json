@@ -1,0 +1,7 @@
+{
+  "name": "Hex",
+  "url": "https://example.invalid/hex",
+  "avatar": "/images/friends/hex.png",
+  "bio": "做音乐推荐的人。每周更新一张歌单，写法像写代码注释。",
+  "tags": ["music", "writing"]
+}

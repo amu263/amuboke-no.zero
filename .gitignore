@@ -1,0 +1,43 @@
+# Dependencies
+apps/web/node_modules/
+
+# Build output
+apps/web/dist/
+
+# Logs
+*.log
+.smoke-task3-dev.log
+
+# Test/Debug files
+bg-test*.html
+grid-test*.html
+grid-*.html
+stacking-test.html
+ui-components-demo.html
+body-covers-grid-test.html
+check-playwright.ps1
+css-probe*.py
+dom-probe.py
+screenshots.py
+_cleanup.py
+check-grid.py
+screenshot-*.png
+unit3-final/
+unit3-*.png
+
+# Materials
+素材/
+
+# Personal notes
+项目开发备忘.txt
+
+# DSH/Agent data
+.codegraph/
+.dsh-vision-router/
+.omo/
+.playwright-mcp/
+.pnpm-store/
+
+# Project docs (do not upload)
+AGENTS.md
+skills/

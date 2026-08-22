@@ -1,0 +1,49 @@
+{
+  "slug": "20250822-03",
+  "title": "建筑特写 · 几何",
+  "date": "2025-08-08",
+  "summary": "线条与光影的精确构成，现代建筑的极简美学。四张图片捕捉建筑的几何之美。",
+  "cover": "/images/gallery/20250822-03/01.jpg",
+  "photos": [
+    {
+      "src": "/images/gallery/20250822-03/01.jpg",
+      "alt": "建筑立面",
+      "caption": "现代建筑几何立面",
+      "exif": {
+        "camera": "Fujifilm X-T5",
+        "lens": "16-55mm f/2.8",
+        "iso": 100
+      }
+    },
+    {
+      "src": "/images/gallery/20250822-03/02.jpg",
+      "alt": "建筑细节",
+      "caption": "建筑细节装饰",
+      "exif": {
+        "camera": "Fujifilm X-T5",
+        "lens": "23mm f/1.4",
+        "iso": 200
+      }
+    },
+    {
+      "src": "/images/gallery/20250822-03/03.jpg",
+      "alt": "建筑光影",
+      "caption": "光影在建筑上流转",
+      "exif": {
+        "camera": "Fujifilm X-T5",
+        "lens": "35mm f/1.4",
+        "iso": 160
+      }
+    },
+    {
+      "src": "/images/gallery/20250822-03/04.jpg",
+      "alt": "室内空间",
+      "caption": "室内空间与光线",
+      "exif": {
+        "camera": "Fujifilm X-T5",
+        "lens": "16mm f/1.4",
+        "iso": 400
+      }
+    }
+  ]
+}

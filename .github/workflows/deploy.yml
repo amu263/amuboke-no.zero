@@ -1,0 +1,96 @@
+name: Deploy to Cloudflare Pages
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+# Allow one concurrent deployment, cancel older runs
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      deployments: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+          cache-dependency-path: apps/web/pnpm-lock.yaml
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+        working-directory: apps/web
+
+      - name: Type check
+        run: pnpm typecheck
+        working-directory: apps/web
+
+      - name: Build
+        run: pnpm build
+        working-directory: apps/web
+
+      - name: Deploy to Cloudflare Pages
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+        uses: cloudflare/pages-action@v1
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          projectName: amuboke-no-zero
+          directory: apps/web/dist
+          gitHubToken: ${{ secrets.GITHUB_TOKEN }}
+          wranglerVersion: '3'
+
+  # Optional: Verify build output on PRs
+  verify:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+          cache-dependency-path: apps/web/pnpm-lock.yaml
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+        working-directory: apps/web
+
+      - name: Type check
+        run: pnpm typecheck
+        working-directory: apps/web
+
+      - name: Build
+        run: pnpm build
+        working-directory: apps/web
+
+      - name: List build output
+        run: find apps/web/dist -type f -name "*.html" | head -20

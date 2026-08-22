@@ -1,0 +1,142 @@
+// AGENTS.md §5 #9: dark/light 两边都显式声明
+// AGENTS.md §9.5: 不引第三方脚本/UI 库
+//
+// 这个文件与 src/styles/tokens.ts 是「双胞胎」：同一份设计 token
+// 在 TS 侧给 Vuetify theme.colors 用，在 SCSS 侧给 .v-theme--light / .v-theme--dark
+// 下注入 --theme-* CSS 变量用。改色必须同时改两边（注释里有交叉引用）。
+//
+// Vuetify 自己也往 .v-theme--light / .v-theme--dark 上挂 --v-theme-* 变量，
+// 我们的 --theme-* 是「自写组件专用」，互不冲突。
+//
+// 选择器策略（单元 2 沉淀，AGENTS.md §5）：
+//   - 「与主题无关」的 token（间距 / 字号 / 圆角 / 阴影 / 字体栈）放 :root，
+//     全局可访问，与主题无关。
+//   - 「与主题相关」的 token（颜色 / 边框 / scrim）放 .v-theme--light / .v-theme--dark。
+//   - Vuetify 把主题类挂在 .v-application 上，所以必须用 .v-theme--light / .v-theme--dark
+//     选择器而不是 :root.{同名}。body 在 .v-application 外，body 的 bg/color 走
+//     base.css 里的 .v-theme--light body / .v-theme--dark body 选择器。
+
+// ── 间距（与主题无关）────────────────────────────────
+$spacing-xs: 0.25rem;
+$spacing-sm: 0.5rem;
+$spacing-md: 1rem;
+$spacing-lg: 1.5rem;
+$spacing-xl: 2.5rem;
+$spacing-xxl: 4rem;
+
+// ── 字号（与主题无关）────────────────────────────────
+$font-size-xs: 0.75rem;
+$font-size-sm: 0.875rem;
+$font-size-base: 1rem;
+$font-size-lg: 1.125rem;
+$font-size-xl: 1.25rem;
+$font-size-2xl: 1.5rem;
+$font-size-3xl: 1.875rem;
+$font-size-4xl: 2.25rem;
+
+// ── 圆角（与主题无关）────────────────────────────────
+$radius-sm: 4px;
+$radius-md: 8px;
+$radius-lg: 12px;
+$radius-xl: 20px;
+$radius-pill: 999px;
+
+// ── 阴影（与主题无关；明日方舟风格：更克制，依赖 border + innerShadow 制造立体感）
+$shadow-xs: 0 1px 3px rgb(0 0 0 / 0.10);
+$shadow-sm: 0 2px 6px rgb(0 0 0 / 0.14);
+$shadow-md: 0 4px 12px rgb(0 0 0 / 0.18);
+$shadow-lg: 0 8px 20px rgb(0 0 0 / 0.22);
+$shadow-xl: 0 12px 32px rgb(0 0 0 / 0.26);
+$shadow-2xl: 0 18px 48px rgb(0 0 0 / 0.30);
+
+// ── 等宽字体栈（与主题无关）──────────────────────────
+$font-family-mono: ui-monospace, SFMono-Regular, "JetBrains Mono", Menlo,
+  Consolas, "Liberation Mono", monospace;
+
+// 与主题无关的 token：在 :root 全局可访问
+:root {
+  --theme-spacing-xs: #{$spacing-xs};
+  --theme-spacing-sm: #{$spacing-sm};
+  --theme-spacing-md: #{$spacing-md};
+  --theme-spacing-lg: #{$spacing-lg};
+  --theme-spacing-xl: #{$spacing-xl};
+  --theme-spacing-xxl: #{$spacing-xxl};
+
+  --theme-font-size-xs: #{$font-size-xs};
+  --theme-font-size-sm: #{$font-size-sm};
+  --theme-font-size-base: #{$font-size-base};
+  --theme-font-size-lg: #{$font-size-lg};
+  --theme-font-size-xl: #{$font-size-xl};
+  --theme-font-size-2xl: #{$font-size-2xl};
+  --theme-font-size-3xl: #{$font-size-3xl};
+  --theme-font-size-4xl: #{$font-size-4xl};
+
+  --theme-radius-sm: #{$radius-sm};
+  --theme-radius-md: #{$radius-md};
+  --theme-radius-lg: #{$radius-lg};
+  --theme-radius-xl: #{$radius-xl};
+  --theme-radius-pill: #{$radius-pill};
+
+  --theme-shadow-xs: #{$shadow-xs};
+  --theme-shadow-sm: #{$shadow-sm};
+  --theme-shadow-md: #{$shadow-md};
+  --theme-shadow-lg: #{$shadow-lg};
+  --theme-shadow-xl: #{$shadow-xl};
+  --theme-shadow-2xl: #{$shadow-2xl};
+
+  --theme-font-mono: #{$font-family-mono};
+}
+
+// 与主题相关的 token（颜色 / 边框 / scrim）：跟随 Vuetify 的主题类
+// tokens.ts 的 light / dark palette 与这里的值必须同步。
+.v-theme--light {
+  --theme-background: #f0f2f5;
+  --theme-surface: #fafbfd;
+  --theme-surface-variant: #e8ebf0;
+  --theme-primary: #c4883a;
+  --theme-secondary: #6b7280;
+  --theme-accent: #2fb5a0;
+  --theme-error: #d94545;
+  --theme-info: #3b6ef5;
+  --theme-success: #2fb5a0;
+  --theme-warning: #d4920a;
+  --theme-on-background: #1a1d24;
+  --theme-on-surface: #1a1d24;
+  --theme-border: rgb(0 0 0 / 0.10);
+  --theme-scrim: rgb(0 0 0 / 0.05);
+  --theme-scrim-strong: rgb(250 251 253 / 0.80);
+  // 苍苍蓝 35% 透明（柔和的雾蓝色调）
+  --theme-grid: rgba(165, 192, 212, 0.35);
+  // 纸质：磨砂玻璃
+  --theme-glass-blur: 10px;
+  --theme-glass: rgba(250, 251, 253, 0.80);
+  // 明日方舟风格
+  --theme-border-glow: rgb(196 136 58 / 0.28);
+  --theme-inner-shadow: inset 0 1px 0 rgb(196 136 58 / 0.18), inset 0 -1px 0 rgb(0 0 0 / 0.06);
+}
+
+.v-theme--dark {
+  --theme-background: #090b0e;
+  --theme-surface: #111520;
+  --theme-surface-variant: #181d28;
+  --theme-primary: #e8a83e;
+  --theme-secondary: #7a8599;
+  --theme-accent: #3dd9c4;
+  --theme-error: #ff6b6b;
+  --theme-info: #7aa2ff;
+  --theme-success: #3dd9c4;
+  --theme-warning: #f0c060;
+  --theme-on-background: #d4d8e0;
+  --theme-on-surface: #d4d8e0;
+  --theme-border: rgb(232 168 62 / 0.22);
+  --theme-scrim: rgb(0 0 0 / 0.32);
+  --theme-scrim-strong: rgb(9 11 14 / 0.82);
+  // 苍苍蓝 50% 透明（柔和的雾蓝色调）
+  --theme-grid: rgba(175, 200, 220, 0.50);
+  // 纸质：磨砂玻璃
+  --theme-glass-blur: 8px;
+  --theme-glass: rgba(9, 11, 14, 0.85);
+  // 明日方舟风格
+  --theme-border-glow: rgb(232 168 62 / 0.35);
+  --theme-inner-shadow: inset 0 1px 0 rgb(232 168 62 / 0.15), inset 0 -1px 0 rgb(0 0 0 / 0.4);
+}

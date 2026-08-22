@@ -1,0 +1,49 @@
+{
+  "slug": "20250822-02",
+  "title": "自然风光 · 山脉",
+  "date": "2025-08-15",
+  "summary": "山峦叠嶂，云海翻涌，天地一线。四张图片记录自然的壮阔。",
+  "cover": "/images/gallery/20250822-02/01.jpg",
+  "photos": [
+    {
+      "src": "/images/gallery/20250822-02/01.jpg",
+      "alt": "山川远景",
+      "caption": "远山层叠云雾缭绕",
+      "exif": {
+        "camera": "Canon R5",
+        "lens": "70-200mm f/2.8",
+        "iso": 200
+      }
+    },
+    {
+      "src": "/images/gallery/20250822-02/02.jpg",
+      "alt": "森林小径",
+      "caption": "林间小道光影斑驳",
+      "exif": {
+        "camera": "Canon R5",
+        "lens": "24-70mm f/2.8",
+        "iso": 400
+      }
+    },
+    {
+      "src": "/images/gallery/20250822-02/03.jpg",
+      "alt": "湖光山色",
+      "caption": "湖水倒映山峦",
+      "exif": {
+        "camera": "Canon R5",
+        "lens": "16-35mm f/4",
+        "iso": 100
+      }
+    },
+    {
+      "src": "/images/gallery/20250822-02/04.jpg",
+      "alt": "日出云海",
+      "caption": "云海翻涌日出",
+      "exif": {
+        "camera": "Canon R5",
+        "lens": "70-200mm f/2.8",
+        "iso": 100
+      }
+    }
+  ]
+}

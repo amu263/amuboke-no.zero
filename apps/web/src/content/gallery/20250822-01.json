@@ -1,0 +1,49 @@
+{
+  "slug": "20250822-01",
+  "title": "城市天际线 · 日落",
+  "date": "2025-08-22",
+  "summary": "傍晚时分城市建筑剪影与渐变天空的对话。四张图片讲述光与建筑的故事。",
+  "cover": "/images/gallery/20250822-01/01.jpg",
+  "photos": [
+    {
+      "src": "/images/gallery/20250822-01/01.jpg",
+      "alt": "城市天际线全景",
+      "caption": "城市天际线与落日余晖",
+      "exif": {
+        "camera": "Sony A7M3",
+        "lens": "24-70mm f/2.8",
+        "iso": 400
+      }
+    },
+    {
+      "src": "/images/gallery/20250822-01/02.jpg",
+      "alt": "城市建筑剪影",
+      "caption": "建筑剪影在晚霞中",
+      "exif": {
+        "camera": "Sony A7M3",
+        "lens": "24-70mm f/2.8",
+        "iso": 320
+      }
+    },
+    {
+      "src": "/images/gallery/20250822-01/03.jpg",
+      "alt": "城市夜景",
+      "caption": "夜幕降临前的城市",
+      "exif": {
+        "camera": "Sony A7M3",
+        "lens": "35mm f/1.8",
+        "iso": 800
+      }
+    },
+    {
+      "src": "/images/gallery/20250822-01/04.jpg",
+      "alt": "城市灯光",
+      "caption": "城市灯光渐次亮起",
+      "exif": {
+        "camera": "Sony A7M3",
+        "lens": "50mm f/1.4",
+        "iso": 1600
+      }
+    }
+  ]
+}

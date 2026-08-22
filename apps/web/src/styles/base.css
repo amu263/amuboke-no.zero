@@ -1,0 +1,467 @@
+/* AGENTS.md §5 — 必须在顶层显式声明 CSS 层序 */
+@layer reset, vuetify, base, components, utilities;
+
+@import '@unocss/reset/tailwind.css' layer(reset); /* AGENTS.md §5 #14: preflight 必须从 @unocss/reset 导入 */
+@import 'vuetify/styles' layer(vuetify);
+
+@layer base {
+  /* AGENTS.md §5 #2: preflight 会清掉 h1~p 的 margin，用 revert 找回来 */
+  h1, h2, h3, h4, h5, h6, p, ul, ol, blockquote, pre, figure {
+    margin: revert;
+  }
+
+  /* AGENTS.md §5 #5: UnoCSS 原子类的 .border 只声明 border-style/border-width，没 border-color */
+  :where(.border) {
+    border-color: var(--theme-border, currentColor);
+  }
+
+  html, body, #app {
+    min-height: 100%;
+  }
+  body {
+    font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, 'PingFang SC',
+      'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+  }
+  /* body 不在 .v-application 内（Vuetify 主题类挂在 .v-application），
+     所以 body 的 bg/color 要单独跟 .v-theme--* 选择器走。
+     AGENTS.md §5 + 单元 2 CSS 变量贯通。 */
+  /* body 背景现在由 .grid-bg 自己提供（不透明深色表面），
+     body 保持透明让网格透出来。 */
+  .v-theme--light body {
+    background-color: transparent;
+    color: var(--theme-on-background);
+  }
+  .v-theme--dark body {
+    background-color: transparent;
+    color: var(--theme-on-background);
+  }
+
+  /* 修复：让 .v-main 背景透明，使网格背景透出来。
+     .v-application 已经是 transparent，.v-main 如果有 surface 背景会盖住网格。 */
+  .v-main {
+    background: transparent !important;
+  }
+
+  /* Unit 4 Todo 6 (existing-route compatibility): hard guarantee that no route
+     can produce horizontal page scroll. Each component still owns its own
+     overflow rules (.code-region for code, .app-bar__nav for nav, etc.) —
+     this is just an outer fence for the document itself. */
+  html, body {
+    overflow-x: clip;
+  }
+}
+
+@layer components {
+  /* AGENTS.md §5 #3: preflight 会把 button padding 归零；这里放任何 .btn-* 自定义组件样式 */
+
+  /* AGENTS.md §5 / markdown-loader §5 #17: markdown 组件不再带 scoped style，
+     全部样式放到全局 .markdown-body 下，配合主题 token 实现暗/亮双稳。 */
+
+  /* ──────────────────────────────────────────────────────────────────────
+     单元 3 / 文章页 h1~h6 分级样式
+     AGENTS.md §4 不限制 prose typography，但 AGENTS.md §0 极客风 + §2 单
+     source of truth 要求我们用 tokens 表达的字号阶梯：
+       h1: 2xl → 3xl → 4xl (由 .markdown-body 容器决定缩放)
+       h2: lg → xl → 2xl
+       h3: base → lg
+       h4: sm → base
+       h5: xs → sm (uppercase, tracking)
+       h6: xs (mono, muted)
+     视觉差异化除了字号，还有：
+       - h1 / h2 带左侧渐变「> 标尺」色条
+       - h3 / h4 用下划线/边框做层级提示
+       - h5 / h6 走等宽字体 + tracking，像代码注释
+     所有值走 --theme-* token，dark/light 自动跟主题走。
+     ────────────────────────────────────────────────────────────────────── */
+  .markdown-body {
+    font-size: var(--theme-font-size-base);
+    line-height: 1.75;
+    color: var(--theme-on-surface);
+  }
+
+  .markdown-body h1 {
+    font-size: var(--theme-font-size-3xl);
+    font-weight: 700;
+    line-height: 1.2;
+    margin-top: 2.25rem;
+    margin-bottom: 1rem;
+    padding-left: 0.85rem;
+    border-left: 4px solid;
+    border-image: linear-gradient(to bottom, var(--theme-primary), var(--theme-accent)) 1;
+    letter-spacing: -0.01em;
+    /* 明日方舟风格：极轻文字投影（仅在浅色背景区域可见） */
+    text-shadow: 0 1px 4px rgb(0 0 0 / 0.12);
+  }
+  .markdown-body h2 {
+    font-size: var(--theme-font-size-2xl);
+    font-weight: 700;
+    line-height: 1.25;
+    margin-top: 2rem;
+    margin-bottom: 0.75rem;
+    padding-left: 0.7rem;
+    border-left: 3px solid;
+    border-image: linear-gradient(to bottom, var(--theme-accent), var(--theme-info)) 1;
+    /* 明日方舟风格：极轻文字投影 */
+    text-shadow: 0 1px 3px rgb(0 0 0 / 0.10);
+  }
+  .markdown-body h3 {
+    font-size: var(--theme-font-size-xl);
+    font-weight: 600;
+    line-height: 1.3;
+    margin-top: 1.5rem;
+    margin-bottom: 0.5rem;
+    padding-bottom: 0.25rem;
+    border-bottom: 1px dashed var(--theme-border);
+    /* 明日方舟风格：基本无投影 */
+    text-shadow: none;
+  }
+  .markdown-body h4 {
+    font-size: var(--theme-font-size-lg);
+    font-weight: 600;
+    line-height: 1.35;
+    margin-top: 1.25rem;
+    margin-bottom: 0.4rem;
+    color: var(--theme-primary);
+    /* 明日方舟风格：无投影 */
+    text-shadow: none;
+  }
+  .markdown-body h5 {
+    font-size: var(--theme-font-size-sm);
+    font-weight: 600;
+    margin-top: 1rem;
+    margin-bottom: 0.3rem;
+    font-family: var(--theme-font-mono);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--theme-secondary);
+  }
+  .markdown-body h6 {
+    font-size: var(--theme-font-size-xs);
+    font-weight: 600;
+    margin-top: 0.85rem;
+    margin-bottom: 0.25rem;
+    font-family: var(--theme-font-mono);
+    color: var(--theme-secondary);
+    opacity: 0.7;
+    letter-spacing: 0.05em;
+  }
+
+  .markdown-body :where(p,li) {
+    line-height: 1.75;
+    text-wrap: pretty;
+  }
+  @media (max-width: 420px) {
+    .markdown-body p {
+      text-wrap: balance;
+      word-break: keep-all;
+      line-break: strict;
+    }
+  }
+  .markdown-body :where(pre,code) { font-family: var(--theme-font-mono); }
+
+/* ──────────────────────────────────────────────────────────────────────
+     单元 3 / 文章页 <pre><code> 代码块：彩虹渐变 + 玻璃材质
+     AGENTS.md §2: 「彩虹」 = pre 块本身的背景渐变（极客终端风格）；
+                  「材质」 = 玻璃 + 渐变 border（双稳 dark/light）。
+     实现：
+       - 背景：conic-gradient 模拟终端彩虹（紫 → 蓝 → 青 → 绿 → 黄 → 橙 → 红），
+         叠一层半透明黑/白做 scrim，跟主题走；不靠代码语法高亮（marked 默认
+         不做 syntax highlight，避免引入 highlight.js 之类重型依赖）。
+       - 边框：1px 实色 + 内层 1px 半透明，靠 mask 切成 4 段「彩虹线」贴在 pre
+         上沿，呼应「终端调色板标题」。
+       - 内联 code 不受影响，只用 scrim。
+     所有颜色变量都在 base 层（AGENTS.md §5），不会被 utilities 层意外覆盖。
+
+     Unit 4 Todo 6: 视觉从 pre 移到外层 .code-region（由 markdown-loader
+     注入的 role="region" wrapper），让 region 独占 overflow-x:auto 横向滚动 —
+     文档其它部分永远不会因为长 code 横向越界。pre 在 region 内只是 code
+     carrier，不再叠 rainbow / scroll / 伪元素。
+     ────────────────────────────────────────────────────────────────────── */
+  .markdown-body pre {
+    position: relative;
+    padding: 1.1rem 1rem 1rem;
+    margin: 1.25rem 0;
+    border-radius: var(--theme-radius-md);
+    overflow: hidden;
+    color: var(--theme-on-surface);
+    background-color: var(--theme-surface);
+    /* 双层背景：底层 conic-gradient 当作「彩虹调色板」，上层半透明 scrim 跟随主题。
+        用 background 叠加而不是 background-image 链，确保 conic 在最下。 */
+    background-image:
+      linear-gradient(var(--theme-scrim-strong), var(--theme-scrim-strong)),
+      conic-gradient(
+        from 0deg at 50% 50%,
+        #a855f7 0deg,
+        #3b6ef5 60deg,
+        #16a085 120deg,
+        #e6a23c 180deg,
+        #d94545 240deg,
+        #a855f7 360deg
+      );
+    background-blend-mode: normal, normal;
+    background-size: cover, 220% 220%;
+    background-position: center, 50% 50%;
+    box-shadow: var(--theme-shadow-md);
+    /* 顶部 1px「彩虹调色板」色带 —— 用 ::before 画 */
+  }
+
+  /* 顶部彩虹色带 + 4 个圆点：靠 ::before + ::after 双层叠加，呼应终端窗口 */
+  .markdown-body pre::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(
+      to right,
+      #a855f7 0%,
+      #3b6ef5 18%,
+      #16a085 36%,
+      #e6a23c 54%,
+      #d94545 72%,
+      #a855f7 100%
+    );
+    pointer-events: none;
+  }
+  .markdown-body pre::after {
+    content: '';
+    position: absolute;
+    top: 8px;
+    left: 12px;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 30% 30%, var(--theme-warning), var(--theme-error));
+    box-shadow:
+      12px 0 0 -1px var(--theme-warning),
+      24px 0 0 -2px var(--theme-success);
+    opacity: 0.6;
+    pointer-events: none;
+  }
+
+  /* pre 内 code 自身的 padding/background 清掉，让彩虹背景显示出来 */
+  .markdown-body pre code {
+    display: block;
+    padding: 0;
+    background: transparent;
+    color: inherit;
+    font-size: var(--theme-font-size-sm);
+    line-height: 1.6;
+    white-space: pre;
+  }
+
+  /* 内联 code（不在 pre 内的）保持原 scrim 风格 */
+  .markdown-body code:not(pre code) {
+    padding: 0.1em 0.35em;
+    border-radius: var(--theme-radius-sm);
+    background: var(--theme-scrim);
+    font-size: 0.92em;
+  }
+
+  /* ──────────────────────────────────────────────────────────────────────
+     Unit 4 Todo 6 / 代码块 region 容器
+     markdown-loader 在每个 fenced code block 外层包了：
+       <div role="region" aria-label="Code" tabindex="0" class="code-region">
+         <pre><code class="language-XXX">…</code></pre>
+       </div>
+     本规则接管原 pre 的彩虹+玻璃+伪元素，并独占横向滚动：
+       - overflow-x: auto   → 仅本 code 块横向滚动；
+       - max-width: 100%    → 不撑破父级容器；
+       - overflow-y: hidden → 避免垂直滚动条跳动；
+       - background-attachment: local
+                            → 横向滚时彩虹背景跟着内容滑动（终端壁纸感），
+                              不会被 background-attachment: fixed 的副作用搞坏。
+     子选择器把 pre/code 复位成「纯代码载具」，避免上方的 .markdown-body pre
+     规则被双重叠加（region 内 pre 既不要背景、也不要伪元素、也不要横向滚动）。
+     ────────────────────────────────────────────────────────────────────── */
+  .markdown-body .code-region {
+    position: relative;
+    display: block;
+    overflow-x: auto;
+    overflow-y: hidden;
+    max-width: 100%;
+    margin: 1.25rem 0;
+    padding: 1.1rem 1rem 1rem;
+    border-radius: var(--theme-radius-md);
+    color: var(--theme-on-surface);
+    background-color: var(--theme-surface);
+    background-image:
+      linear-gradient(var(--theme-scrim-strong), var(--theme-scrim-strong)),
+      conic-gradient(
+        from 0deg at 50% 50%,
+        #a855f7 0deg,
+        #3b6ef5 60deg,
+        #16a085 120deg,
+        #e6a23c 180deg,
+        #d94545 240deg,
+        #a855f7 360deg
+      );
+    background-blend-mode: normal, normal;
+    background-size: cover, 220% 220%;
+    background-position: center, 50% 50%;
+    background-attachment: local;
+    box-shadow: var(--theme-shadow-md);
+    /* 滚动条造型 — 与设计 token 风格统一的细条 */
+    scrollbar-width: thin;
+    scrollbar-color: var(--theme-border) transparent;
+  }
+  .markdown-body .code-region::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(
+      to right,
+      #a855f7 0%,
+      #3b6ef5 18%,
+      #16a085 36%,
+      #e6a23c 54%,
+      #d94545 72%,
+      #a855f7 100%
+    );
+    pointer-events: none;
+  }
+  .markdown-body .code-region::after {
+    content: '';
+    position: absolute;
+    top: 8px;
+    left: 12px;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 30% 30%, var(--theme-warning), var(--theme-error));
+    box-shadow:
+      12px 0 0 -1px var(--theme-warning),
+      24px 0 0 -2px var(--theme-success);
+    opacity: 0.6;
+    pointer-events: none;
+  }
+  /* 子 pre/code 复位 — 彩虹 / 伪元素 / overflow 全部移交给 region */
+  .markdown-body .code-region > pre {
+    margin: 0;
+    padding: 0;
+    display: block;
+    background: transparent;
+    color: inherit;
+    font-family: var(--theme-font-mono);
+    font-size: var(--theme-font-size-sm);
+    line-height: 1.6;
+    white-space: pre;
+    overflow: visible;
+    box-shadow: none;
+    border: 0;
+    border-radius: 0;
+    background-image: none;
+    background-color: transparent;
+  }
+  .markdown-body .code-region > pre::before,
+  .markdown-body .code-region > pre::after {
+    content: none;
+    display: none;
+  }
+  .markdown-body .code-region > pre > code {
+    display: block;
+    padding: 0;
+    background: transparent;
+    color: inherit;
+    font-size: inherit;
+    line-height: inherit;
+    white-space: inherit;
+    font-family: inherit;
+  }
+  /* 键盘可达：focus 时给出 primary outline，让键盘用户清楚当前焦点在 code 块 */
+  .markdown-body .code-region:focus-visible {
+    outline: 2px solid var(--theme-primary);
+    outline-offset: 2px;
+  }
+
+  /* ──────────────────────────────────────────────────────────────────────
+     Unit 4 Todo 6 / Decorative level 7/8
+     AGENTS.md §9.5：不引第三方排版库，heading 到 h6 已是语义上限；
+     余下的「更小、注释级、纯视觉」装饰用 .vis-level-7 / .vis-level-8
+     （或别名 .lv7 / .lv8）做 utility class，对应 tokenized 美学 —
+     全部从 --theme-* token 推导。
+     仅 styling，不携带语义；不会改变文档 heading outline。
+     ────────────────────────────────────────────────────────────────────── */
+  .vis-level-7,
+  .lv7 {
+    font-family: var(--theme-font-mono);
+    font-size: var(--theme-font-size-xs);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--theme-secondary);
+    opacity: 0.55;
+  }
+  .vis-level-8,
+  .lv8 {
+    font-family: var(--theme-font-mono);
+    font-size: 0.625rem;        /* 进一步压缩；比 xs 还小一档 */
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--theme-secondary);
+    opacity: 0.4;
+  }
+
+  .markdown-body blockquote {
+    border-left: 3px solid var(--theme-primary);
+    padding-left: 1rem;
+    margin-left: 0;
+    opacity: 0.85;
+    font-style: italic;
+  }
+  .markdown-body img { max-width: 100%; height: auto; border-radius: var(--theme-radius-md); }
+  .markdown-body a {
+    color: var(--theme-primary);
+    text-decoration: underline;
+    text-decoration-color: var(--theme-border);
+    text-underline-offset: 2px;
+  }
+  .markdown-body a:hover {
+    text-decoration-color: var(--theme-primary);
+  }
+  .markdown-body hr {
+    border: 0;
+    border-top: 1px dashed var(--theme-border);
+    margin: 2rem 0;
+  }
+  .markdown-body ul {
+    list-style: disc;
+    padding-left: 1.5rem;
+  }
+  .markdown-body ol {
+    list-style: decimal;
+    padding-left: 1.5rem;
+  }
+  .markdown-body table {
+    border-collapse: collapse;
+    width: 100%;
+    font-size: var(--theme-font-size-sm);
+  }
+  .markdown-body th, .markdown-body td {
+    border: 1px solid var(--theme-border);
+    padding: 0.5rem 0.75rem;
+    text-align: left;
+  }
+  .markdown-body th {
+    background: var(--theme-scrim);
+    font-weight: 600;
+  }
+}
+
+@layer utilities {
+  /* AGENTS.md §5 #3: utilities 层在 components 层之后，保证覆盖默认 button padding */
+}
+
+/* ──────────────────────────────────────────────────────────────────────────
+   单元 3：scrim-strong 由 tokens.scss 提供（与 tokens.ts 同步）。
+   这里不再重复定义，避免双胞胎规则分裂。
+   ────────────────────────────────────────────────────────────────────────── */
+
+/* ──────────────────────────────────────────────────────────────────────────
+   单元 2 / 收尾：app.vue 里的真实 DOM 网格层 <div class="grid-bg"> 已替代了之前
+   的 body::before / html::before 方案。配合 .v-application 在 @layer base 内的
+   transparent override 即可，不再需要 layer 外 !important hack。
+   ────────────────────────────────────────────────────────────────────────── */
