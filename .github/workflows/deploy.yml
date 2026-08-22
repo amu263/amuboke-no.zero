@@ -8,7 +8,6 @@ on:
     branches:
       - master
 
-# Allow one concurrent deployment, cancel older runs
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
@@ -50,12 +49,13 @@ jobs:
 
       - name: Deploy to Cloudflare Pages
         if: github.ref == 'refs/heads/master' && github.event_name == 'push'
-        run: npx wrangler pages deploy apps/web/dist --project-name=amuboke-no-zero
-        env:
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        uses: cloudflare/pages-action@v1
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          projectName: amuboke-no-zero
+          directory: apps/web/dist
 
-  # Optional: Verify build output on PRs
   verify:
     runs-on: ubuntu-latest
     if: github.event_name == 'pull_request'
