@@ -1,0 +1,15 @@
+{
+  "slug": "coldplay",
+  "name": "Coldplay Fan Project",
+  "summary": "Coldplay 酷玩乐队的粉丝向项目，收录乐队作品信息、歌词、专辑封面等资料。献给所有喜欢 Coldplay 的乐迷。",
+  "tech": [
+    "Vue 3",
+    "TypeScript",
+    "Vuetify 3",
+    "Vite"
+  ],
+  "status": "active",
+  "links": {
+    "github": "https://github.com/amu263/coldplay"
+  }
+}
