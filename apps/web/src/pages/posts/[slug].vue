@@ -2,6 +2,7 @@
 // AGENTS.md §1 §3: 文章页 — 构建期定型（数据来自 build-time-index，不再 import.meta.glob）
 // AGENTS.md §4: 页面壳只决定 variant；子组件决定皮肤
 import { computed, onMounted } from 'vue'
+import PostHero from '@/components/post/PostHero.vue'
 import { useRoute } from 'vue-router'
 import { POSTS_BY_SLUG, type PostMeta } from '@/content/build-time-index'
 import { useLike } from '@/composables/useLike'
@@ -49,20 +50,7 @@ withDefaults(defineProps<{ variant?: PostHeroVariant }>(), { variant: 'card' })
 
     <article v-if="hit" class="post-page">
       <header class="post-page__head">
-        <time class="post-page__date">{{ hit.date ?? '未注明日期' }}</time>
-        <h1 class="post-page__title">{{ hit.title ?? hit.slug }}</h1>
-        <p v-if="hit.summary" class="post-page__summary">{{ hit.summary }}</p>
-        <div class="post-page__meta-row">
-          <div v-if="hit.tags?.length" class="post-page__tags">
-            <span v-for="t in hit.tags" :key="t" class="post-page__tag">#{{ t }}</span>
-          </div>
-          <LikeButton
-            :count="count"
-            :has-liked="hasLiked"
-            class="post-page__like"
-            @like="doLike"
-          />
-        </div>
+        <PostHero :post="hit" :variant="variant" />
       </header>
 
       <!--

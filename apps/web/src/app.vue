@@ -4,7 +4,7 @@ import { useTheme } from '@/composables/useTheme'
 import AppBar from '@/components/layout/AppBar.vue'
 import SearchModal from '@/components/search/SearchModal.vue'
 
-const { syncRootClass } = useTheme()
+// syncRootClass 是 useTheme 内部函数，主题切换由 useTheme 内部自动同步
 
 const searchOpen = ref(false)
 function openSearch() {

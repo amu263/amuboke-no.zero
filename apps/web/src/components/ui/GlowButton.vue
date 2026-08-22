@@ -12,12 +12,10 @@ defineProps<{
 
 <template>
   <component
-    :is="href ? 'a' : to ? 'router-link' : 'button'"
-    :href="href"
-    :to="to"
+    :is="href ? 'a' : 'router-link'"
+    v-bind="href ? { href } : { to }"
     :disabled="disabled"
     :class="['glow-btn', `glow-btn--${variant ?? 'primary'}`, `glow-btn--${size ?? 'md'}`]"
-    v-bind="$attrs"
   >
     <slot />
   </component>

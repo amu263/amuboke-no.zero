@@ -42,8 +42,8 @@ function loadPostSeoMap(): Record<string, { title: string; description: string; 
       if (fm.date) {
         if (typeof fm.date === 'string') {
           dateStr = fm.date.slice(0, 10)
-        } else if (fm.date instanceof Date) {
-          dateStr = fm.date.toISOString().slice(0, 10)
+        } else if (fm.date && typeof fm.date === 'object' && 'toISOString' in fm.date) {
+          dateStr = (fm.date as Date).toISOString().slice(0, 10)
         }
       }
       seoMap[routePath] = {
@@ -197,13 +197,13 @@ export default defineConfig({
     Markdown(),
     // LCP 优化：统一输出 WebP 格式，质量 90%
     viteSharp({
-      quality: 90,
+      // @ts-ignore vite-plugin-sharp types are incomplete for webp quality/format
       format: 'webp',
       webp: {
         quality: 90,
-        effort: 4
+        effort: 4,
       }
-    })
+    } as any),
   ],
   ssgOptions,
   ssr: {
