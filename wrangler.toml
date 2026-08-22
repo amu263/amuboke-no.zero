@@ -1,5 +1,4 @@
 name = "amuboke-no-zero"
-main = "dist/index.html"
 workers_dev = false
 
 [site]
