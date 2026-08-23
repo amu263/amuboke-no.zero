@@ -2,11 +2,12 @@
 // AGENTS.md §1 §3: 文章页 — 构建期定型（数据来自 build-time-index，不再 import.meta.glob）
 // AGENTS.md §4: 页面壳只决定 variant；子组件决定皮肤
 import { computed, onMounted } from 'vue'
-import PostHero from '@/components/post/PostHero.vue'
 import { useRoute } from 'vue-router'
 import { POSTS_BY_SLUG, type PostMeta } from '@/content/build-time-index'
+import PostHero from '@/components/post/PostHero.vue'
 import { useLike } from '@/composables/useLike'
 import LikeButton from '@/components/like/LikeButton.vue'
+import GiscusComments from '@/components/comment/GiscusComments.vue'
 
 const route = useRoute()
 const slug = computed(() => String(route.params.slug ?? ''))
@@ -14,7 +15,7 @@ const slug = computed(() => String(route.params.slug ?? ''))
 const hit = computed<PostMeta | null>(() => POSTS_BY_SLUG[slug.value] ?? null)
 const backHref = computed(() => '/posts')
 
-// 点赞 stub（单元 6）：纯前端 localStorage 追踪，不需要后端
+// 点赞（单元 6）：纯前端 localStorage 追踪，不需要后端
 const { count, hasLiked, fetchCount, doLike } = useLike(slug.value)
 
 onMounted(() => {
@@ -22,7 +23,6 @@ onMounted(() => {
 })
 
 // PostHeroVariant: 文章页壳用「terminal / newspaper / card」三选一
-// 单元 3 只交付「card」一种实现，单元 4 会补齐
 export type PostHeroVariant = 'terminal' | 'newspaper' | 'card'
 withDefaults(defineProps<{ variant?: PostHeroVariant }>(), { variant: 'card' })
 </script>
@@ -51,13 +51,21 @@ withDefaults(defineProps<{ variant?: PostHeroVariant }>(), { variant: 'card' })
     <article v-if="hit" class="post-page">
       <header class="post-page__head">
         <PostHero :post="hit" :variant="variant" />
+        <!-- 点赞按钮（单元 6）-->
+        <div class="post-page__meta-row">
+          <div />
+          <LikeButton
+            :count="count"
+            :has-liked="hasLiked"
+            @like="doLike"
+          />
+        </div>
       </header>
 
-      <!--
-        markdown-loader §5 #17: .md 的「默认形态」已是编译好的 Vue SFC，里面把
-        marked.parse 的 html 渲染到 .markdown-body 下。这里直接 v-html。
-      -->
       <div class="markdown-body" v-html="hit.html" />
+
+      <!-- Giscus 评论系统（GitHub Discussions）-->
+      <GiscusComments />
     </article>
 
     <v-alert
@@ -82,46 +90,12 @@ withDefaults(defineProps<{ variant?: PostHeroVariant }>(), { variant: 'card' })
   stroke-width: 2;
 }
 .post-page__head {
-  margin-bottom: 2rem;
-}
-.post-page__date {
-  font-family: var(--theme-font-mono);
-  font-size: var(--theme-font-size-sm);
-  opacity: 0.6;
-}
-.post-page__title {
-  margin-top: 0.25rem;
-  font-size: var(--theme-font-size-3xl);
-  font-weight: 700;
-  line-height: 1.2;
-}
-.post-page__summary {
-  margin-top: 0.5rem;
-  opacity: 0.75;
-  line-height: 1.6;
+  margin-bottom: 1.5rem;
 }
 .post-page__meta-row {
-  margin-top: 0.75rem;
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-}
-.post-page__tags {
-  display: flex;
-  gap: 0.5rem;
-  flex-wrap: wrap;
-}
-.post-page__tag {
-  font-family: var(--theme-font-mono);
-  font-size: var(--theme-font-size-xs);
-  padding: 0.1em 0.5em;
-  border-radius: var(--theme-radius-sm);
-  background: var(--theme-scrim);
-  color: var(--theme-accent);
-}
-.post-page__like {
-  flex-shrink: 0;
+  justify-content: flex-end;
+  margin-top: 0.75rem;
 }
 </style>
