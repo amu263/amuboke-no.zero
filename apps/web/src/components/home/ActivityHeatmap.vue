@@ -69,24 +69,13 @@ const total = computed(() =>
 
 // ── Tooltip ──────────────────────────────────────────────────────
 const tip = ref<{ date: string; count: number; x: number; y: number } | null>(null)
-const tipLabel = computed(() => {
-  if (!tip.value) return ''
-  const { date, count } = tip.value
+function formatTip(date: string, count: number): string {
   const d = new Date(date + 'T00:00:00.000Z')
   const cn = ['周日','周一','周二','周三','周四','周五','周六']
   const ds = cn[d.getUTCDay()]
-  const fmt = `${d.getUTCFullYear()}年${d.getUTCMonth()+1}月${d.getUTCDate()}日 ${ds}`
-  return count > 0 ? `${fmt} — ${count} 条更新` : `${fmt} — 无更新`
-})
-function showTip(row: number, col: number, e: MouseEvent) {
-  const yearData = selectedYearData.value
-  if (!yearData) return
-  const dayIndex = col * DAYS + row
-  const day = yearData.days[dayIndex]
-  if (day) { tip.value = { date: day.date, count: day.count, x: e.clientX, y: e.clientY } }
+  const fmt = d.getUTCFullYear() + '年' + (d.getUTCMonth() + 1) + '月' + d.getUTCDate() + '日 ' + ds
+  return fmt + ' · ' + count + ' 条更新'
 }
-function moveTip(e: MouseEvent) { if (tip.value) { tip.value.x = e.clientX; tip.value.y = e.clientY } }
-function hideTip() { tip.value = null }
 
 // ── Year selector: vertical scroll ───────────────────────────────
 const yearListRef = ref<HTMLElement | null>(null)
@@ -149,10 +138,9 @@ function onKey(e: KeyboardEvent, row: number, col: number) {
           class="ah-cell"
           :class="'level-' + cell.level"
           :aria-label="cell.date + (cell.count > 0 ? `, ${cell.count} 条更新` : ', 无更新')"
+          :title="cell.count > 0 ? formatTip(cell.date, cell.count) : undefined"
+          :data-tooltip="cell.count > 0 ? formatTip(cell.date, cell.count) : undefined"
           tabindex="0"
-          @mouseenter="showTip(ri, ci, $event)"
-          @mousemove="moveTip"
-          @mouseleave="hideTip"
           @focus="focusIdx = cellIdx(ri, ci)"
           @blur="focusIdx = null"
           @keydown="onKey($event, ri, ci)"
@@ -186,14 +174,6 @@ function onKey(e: KeyboardEvent, row: number, col: number) {
       </nav>
     </div>
 
-    <!-- Tooltip -->
-    <div
-      v-if="tip"
-      class="ah-tooltip"
-      role="tooltip"
-      aria-live="polite"
-      :style="{ left: tip.x + 'px', top: tip.y + 'px' }"
-    >{{ tipLabel }}</div>
 
   </section>
 </template>
@@ -349,19 +329,44 @@ function onKey(e: KeyboardEvent, row: number, col: number) {
 .ah-tooltip {
   position: fixed;
   z-index: 100;
-  transform: translate(-50%, calc(-100% - 18px));
+  transform: translate(-50%, calc(-100% - 10px));
   white-space: nowrap;
-  padding: 4px 10px;
-  background: var(--theme-scrimStrong);
-  border: 1px solid var(--theme-border);
+  padding: 5px 9px;
+  background: color-mix(in srgb, var(--theme-surface) 92%, var(--theme-primary));
+  border: 1px solid color-mix(in srgb, var(--theme-primary) 55%, var(--theme-border));
   border-radius: var(--theme-radius-sm);
   font-family: var(--theme-font-mono);
   font-size: var(--theme-font-size-xs);
-  color: var(--theme-on-background);
+  color: var(--theme-on-surface);
+  line-height: 1.35;
   backdrop-filter: blur(8px);
   pointer-events: none;
   box-shadow: var(--theme-shadow-md);
 }
+.ah-cell[data-tooltip]::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  left: 50%;
+  bottom: calc(100% + 10px);
+  transform: translateX(-50%);
+  z-index: 200;
+  display: none;
+  width: max-content;
+  max-width: 220px;
+  padding: 5px 9px;
+  border: 1px solid color-mix(in srgb, var(--theme-primary) 55%, var(--theme-border));
+  border-radius: var(--theme-radius-sm);
+  background: color-mix(in srgb, var(--theme-surface) 92%, var(--theme-primary));
+  color: var(--theme-on-surface);
+  font-family: var(--theme-font-mono);
+  font-size: var(--theme-font-size-xs);
+  line-height: 1.35;
+  white-space: nowrap;
+  pointer-events: none;
+  box-shadow: var(--theme-shadow-md);
+}
+.ah-cell[data-tooltip]:hover::after,
+.ah-cell[data-tooltip]:focus-visible::after { display: block; }
 .ah-tooltip::after {
   content: '';
   position: absolute;
@@ -373,6 +378,6 @@ function onKey(e: KeyboardEvent, row: number, col: number) {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .ah-cell, .ah-tooltip { transition: none; }
+  .ah-cell { transition: none; }
 }
 </style>

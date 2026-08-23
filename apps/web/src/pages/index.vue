@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue'
+import { BILIBILI_PROFILE_URL } from '@/data/social'
 import { POSTS, PROJECTS, GALLERIES, FRIENDS, LISTENS, getContentSummary, ACTIVITY_HEATMAP } from '@/content/build-time-index'
 import ActivityHeatmap from '@/components/home/ActivityHeatmap.vue'
 import {
@@ -39,6 +40,12 @@ const contributors = [
   { name: 'ChatGPT 5.6' },
   { name: 'DeepSeek v4 Flash' },
   { name: 'Grok 4.5' },
+]
+const socialLinks = [
+  { name: '哔哩哔哩', href: BILIBILI_PROFILE_URL, kind: 'bilibili' },
+  { name: '网易云音乐', href: 'https://music.163.com/#/user/home?id=1695448500', kind: 'netease' },
+  { name: 'GitHub', href: 'https://github.com/amu263', kind: 'github' },
+  { name: 'QQ', href: 'https://qm.qq.com/q/27n5EEQVsM', kind: 'qq' },
 ]
 </script>
 
@@ -83,6 +90,23 @@ const contributors = [
             <span class="home-page__stat-label">专辑</span>
           </span>
         </div>
+        <nav class="home-page__socials" aria-label="社交主页">
+          <a
+            v-for="social in socialLinks"
+            :key="social.href"
+            class="home-page__social-link"
+            :class="'is-' + social.kind"
+            :href="social.href"
+            :aria-label="social.name"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            <img v-if="social.kind === 'bilibili'" src="/icons/bilibili.svg" alt="" aria-hidden="true" />
+            <img v-else-if="social.kind === 'netease'" src="/icons/netease.svg" alt="" aria-hidden="true" />
+            <svg v-else-if="social.kind === 'github'" width="15" height="15" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 2C6.5 2 2 6.6 2 12.2c0 4.5 2.9 8.3 6.9 9.6.5.1.7-.2.7-.5v-1.8c-2.8.6-3.4-1.2-3.4-1.2-.5-1.2-1.1-1.5-1.1-1.5-.9-.6.1-.6.1-.6 1 .1 1.5 1 1.5 1 .9 1.5 2.3 1.1 2.9.8.1-.7.4-1.1.7-1.4-2.2-.3-4.5-1.1-4.5-4.8 0-1.1.4-1.9 1-2.6-.1-.3-.4-1.3.1-2.7 0 0 .8-.3 2.7 1a9.1 9.1 0 0 1 5 0c1.9-1.3 2.7-1 2.7-1 .5 1.4.2 2.4.1 2.7.6.7 1 1.5 1 2.6 0 3.7-2.3 4.5-4.5 4.8.4.3.7.9.7 1.8v2.7c0 .3.2.6.7.5 4-1.3 6.9-5.1 6.9-9.6C22 6.6 17.5 2 12 2Z"/></svg>
+            <img v-else src="/icons/qq.svg" alt="" aria-hidden="true" />
+          </a>
+        </nav>
       </div>
       <div class="home-page__hero-portrait">
         <img src="/img/portrait-hero.png" alt="Creator portrait" width="1254" height="1254" loading="eager" fetchpriority="high" decoding="sync" />
@@ -224,11 +248,17 @@ const contributors = [
 .home-page__quote { display: grid; gap: var(--theme-spacing-sm); padding-left: var(--theme-spacing-md); border-left: 2px solid var(--theme-primary); margin: var(--theme-spacing-sm) 0; }
 .home-page__quote-zh { font-size: clamp(1.3rem, 2.5vw, 2.2rem); font-weight: 650; line-height: 1.35; animation: home-rise 280ms 380ms cubic-bezier(.2,.8,.2,1) both; }
 .home-page__quote-en { color: var(--theme-secondary); font-size: var(--theme-font-size-sm); font-style: italic; line-height: 1.45; opacity: 0.7; animation: home-rise 240ms 460ms cubic-bezier(.2,.8,.2,1) both; }
-.home-page__channels { display: flex; flex-wrap: wrap; gap: 0.5rem; animation: home-rise 240ms 540ms cubic-bezier(.2,.8,.2,1) both; }
-.home-page__stats { display: flex; gap: var(--theme-spacing-xl); animation: home-rise 240ms 620ms cubic-bezier(.2,.8,.2,1) both; margin-top: var(--theme-spacing-sm); }
-.home-page__stat { display: flex; flex-direction: column; align-items: flex-start; }
+.home-page__channels { display: grid; grid-template-columns: repeat(4, 62px); gap: 0.5rem; width: max-content; animation: home-rise 240ms 540ms cubic-bezier(.2,.8,.2,1) both; }
+.home-page__channels > * { width: 62px; justify-content: center; }
+.home-page__stats { display: grid; grid-template-columns: repeat(4, 62px); gap: 0.5rem; width: max-content; animation: home-rise 240ms 620ms cubic-bezier(.2,.8,.2,1) both; margin-top: var(--theme-spacing-sm); }
+.home-page__stat { display: flex; flex-direction: column; align-items: center; text-align: center; }
 .home-page__stat-num { font-family: var(--theme-font-mono); font-size: var(--theme-font-size-2xl); font-weight: 700; color: var(--theme-primary); line-height: 1; }
 .home-page__stat-label { font-family: var(--theme-font-mono); font-size: var(--theme-font-size-xs); color: var(--theme-secondary); opacity: 0.6; }
+.home-page__socials { display: flex; align-items: center; gap: 0.75rem; height: 26px; margin-top: var(--theme-spacing-sm); }
+.home-page__social-link { display: inline-grid; place-items: center; flex: 0 0 48px; width: 48px !important; height: 48px !important; min-width: 48px; min-height: 48px; padding: 0 !important; color: var(--theme-secondary); border: 1px solid var(--theme-border); border-radius: 50%; background: var(--theme-surface); opacity: 0.78; overflow: hidden; transition: color 160ms ease, border-color 160ms ease, transform 160ms ease, opacity 160ms ease; }
+.home-page__social-link svg, .home-page__social-link img { display: block; width: 30px !important; height: 30px !important; max-width: 30px; max-height: 30px; object-fit: contain; }
+.home-page__social-link:hover, .home-page__social-link:focus-visible { color: var(--theme-primary); border-color: var(--theme-primary); opacity: 1; transform: translateY(-2px); outline: none; }
+.home-page__social-link:focus-visible { box-shadow: 0 0 0 2px color-mix(in srgb, var(--theme-primary) 35%, transparent); }
 
 .home-page__content { padding-top: var(--theme-spacing-xl); padding-bottom: var(--theme-spacing-xxl); }
 .home-page__section { margin-bottom: var(--theme-spacing-xl); }
@@ -269,6 +299,9 @@ const contributors = [
   .home-page__hero-identity { padding: var(--theme-spacing-lg) var(--theme-spacing-md); align-items: flex-start; }
   .home-page__hero-portrait { height: 260px; max-height: 260px; flex: none; }
   .home-page__posts, .home-page__projects { grid-template-columns: 1fr; }
-  .home-page__stats { gap: var(--theme-spacing-lg); }
+  .home-page__channels,
+  .home-page__stats { grid-template-columns: repeat(4, minmax(0, 1fr)); width: 100%; }
+  .home-page__channels > * { width: 100%; }
+  .home-page__stats { gap: 0.5rem; }
 }
 </style>

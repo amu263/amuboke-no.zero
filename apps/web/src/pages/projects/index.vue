@@ -27,6 +27,15 @@ function getStatusLabel(status?: string): string {
     default: return '未知'
   }
 }
+
+function getProjectUrl(project: { links?: Record<string, string | undefined> }): string | undefined {
+  return project.links?.demo || project.links?.repo || project.links?.github
+}
+
+function openProject(project: { links?: Record<string, string | undefined> }): void {
+  const url = getProjectUrl(project)
+  if (url && typeof window !== 'undefined') window.open(url, '_blank', 'noopener,noreferrer')
+}
 </script>
 
 <template>
@@ -44,7 +53,15 @@ function getStatusLabel(status?: string): string {
           :title="project.slug + '.json'"
           prompt="$ ls -la"
         >
-          <div class="project-item">
+          <div
+            class="project-item project-item--clickable"
+            :class="{ 'project-item--has-link': getProjectUrl(project) }"
+            :role="getProjectUrl(project) ? 'link' : undefined"
+            :tabindex="getProjectUrl(project) ? 0 : undefined"
+            @click="openProject(project)"
+            @keydown.enter.prevent="openProject(project)"
+            @keydown.space.prevent="openProject(project)"
+          >
             <header class="project-item__header">
               <h2 class="project-item__name">{{ project.name }}</h2>
               <StatusBadge
@@ -62,12 +79,13 @@ function getStatusLabel(status?: string): string {
               <MonoChip v-for="t in project.tech.slice(0, 5)" :key="t">{{ t }}</MonoChip>
             </div>
 
-            <div v-if="project.links?.repo" class="project-item__links">
+            <div v-if="getProjectUrl(project)" class="project-item__links">
               <a
-                :href="project.links.repo"
+                :href="project.links?.repo || project.links?.github || project.links?.demo"
                 target="_blank"
                 rel="noopener"
                 class="project-item__link"
+                @click.stop
               >
                 <svg viewBox="0 0 16 16" width="14" height="14" fill="currentColor">
                   <path d="M8 0C3.58 0 0 3.67 0 8.2c0 3.62 2.29 6.69 5.47 7.78.4.08.55-.18.55-.4v-1.52c-2.23.5-2.7-.98-2.7-.98-.36-.95-.89-1.2-.89-1.2-.73-.51.06-.5.06-.5.8.06 1.23.85 1.23.85.72 1.26 1.87.9 2.33.69.07-.53.28-.9.51-1.1-1.78-.2-3.64-.91-3.64-4.05 0-.9.31-1.63.82-2.2-.08-.21-.36-1.04.08-2.17 0 0 .67-.22 2.2.84A7.45 7.45 0 0 1 8 3.96c.68 0 1.36.09 2 .28 1.52-1.06 2.19-.84 2.19-.84.44 1.13.16 1.96.08 2.17.51.57.82 1.3.82 2.2 0 3.15-1.87 3.85-3.65 4.05.29.25.54.76.54 1.54v2.22c0 .22.15.48.55.4A8.13 8.13 0 0 0 16 8.2C16 3.67 12.42 0 8 0Z"/>
@@ -75,11 +93,12 @@ function getStatusLabel(status?: string): string {
                 源码
               </a>
               <a
-                v-if="project.links.demo"
-                :href="project.links.demo"
+                v-if="project.links?.demo"
+                :href="project.links?.demo"
                 target="_blank"
                 rel="noopener"
                 class="project-item__link"
+                @click.stop
               >
                 <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2">
                   <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
@@ -137,6 +156,20 @@ function getStatusLabel(status?: string): string {
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
+}
+
+.project-item--has-link {
+  cursor: pointer;
+  border-radius: var(--theme-radius-sm);
+  transition: background-color 160ms, transform 160ms;
+}
+.project-item--has-link:hover,
+.project-item--has-link:focus-visible {
+  background: var(--theme-scrim);
+  outline: none;
+}
+.project-item--has-link:focus-visible {
+  box-shadow: 0 0 0 2px var(--theme-primary);
 }
 
 .project-item__header {

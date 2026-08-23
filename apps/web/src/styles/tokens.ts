@@ -47,8 +47,8 @@ export const palettes: Record<ThemeName, Palette> = {
     background: '#f0f2f5',
     surface: '#fafbfd',
     surfaceVariant: '#e8ebf0',
-    // 明日方舟风格：主色改为琥珀金
-    primary: '#c4883a',
+    // 浅色主题：青绿色主色
+    primary: 'rgb(47, 181, 160)',
     secondary: '#6b7280',
     accent: '#2fb5a0',
     error: '#d94545',

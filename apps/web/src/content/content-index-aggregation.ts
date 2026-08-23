@@ -155,6 +155,9 @@ export function buildContentIndex(sources: readonly IndexSourceItem[]): ContentI
 
   const datedItems = items.filter(isDated)
   const dedupedDatedItems = dedupeBySlug(datedItems)
+  // 热力图统计「观察 / 看见 / 听见」三类内容；项目卡片不算入内容更新。
+  // 不去重同日内容：同一天发布一篇文章、一个图集和一张专辑，应显示为 3 条更新。
+  const heatmapItems = datedItems.filter((item) => item.type !== 'project')
   return Object.freeze({
     byChannel: Object.freeze({
       折腾: Object.freeze(mutableByChannel['折腾']),
@@ -163,6 +166,6 @@ export function buildContentIndex(sources: readonly IndexSourceItem[]): ContentI
       看见: Object.freeze(mutableByChannel['看见'])
     }),
     recentUpdates: Object.freeze(dedupedDatedItems.slice(0, 8)),
-    activityHeatmap: buildHeatmap(dedupedDatedItems)
+    activityHeatmap: buildHeatmap(heatmapItems)
   })
 }
