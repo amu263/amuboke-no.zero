@@ -48,7 +48,7 @@ export const palettes: Record<ThemeName, Palette> = {
     surface: '#fafbfd',
     surfaceVariant: '#e8ebf0',
     // 浅色主题：青绿色主色
-    primary: 'rgb(47, 181, 160)',
+    primary: '#2fb5a0',
     secondary: '#6b7280',
     accent: '#2fb5a0',
     error: '#d94545',
