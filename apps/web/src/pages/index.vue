@@ -13,6 +13,7 @@ import {
   GlitchText,
   TickerText,
   MetaLine,
+  ContributorScroll,
 } from '@/components/ui'
 
 const summary = getContentSummary()
@@ -29,6 +30,15 @@ const channelLinks = [
   { to: '/projects', label: '折腾', desc: '项目与实验' },
   { to: '/listen', label: '听见', desc: '音乐档案' },
   { to: '/gallery', label: '看见', desc: '图集与照片' },
+]
+const contributors = [
+  { name: 'DeepSeek Harness' },
+  { name: 'OpenCode' },
+  { name: 'Codex' },
+  { name: 'MiniMax M2.7' },
+  { name: 'ChatGPT 5.6' },
+  { name: 'DeepSeek v4 Flash' },
+  { name: 'Grok 4.5' },
 ]
 </script>
 
@@ -84,6 +94,11 @@ const channelLinks = [
 
     <v-container max-width="1100" class="home-page__content">
 
+      <!-- Code Contributors — danmaku scrolling -->
+      <section class="home-page__section home-page__contributor">
+        <ContributorScroll :contributors="contributors" :rows="3" :speed="22" />
+      </section>
+
       <section class="home-page__section">
         <SectionHeader label="RECENT" title="最新文章" />
         <div class="home-page__posts">
@@ -97,16 +112,15 @@ const channelLinks = [
               <MetaLine :date="post.date" :tags="(post.tags ?? []).slice(0, 3)" />
               <h3 class="post-item__title">{{ post.title ?? post.slug }}</h3>
               <p v-if="post.summary" class="post-item__summary">{{ post.summary }}</p>
-              <GlowButton variant="ghost" size="sm" :to="'/posts/' + post.slug">阅读全文 →</GlowButton>
+              <GlowButton variant="ghost" size="sm" :to="'/posts/' + post.slug">阅读全文</GlowButton>
             </div>
           </TerminalCard>
         </div>
         <div class="home-page__section-footer">
-          <GlowButton variant="secondary" to="/posts">查看全部 {{ summary.posts }} 篇 →</GlowButton>
+          <GlowButton variant="secondary" to="/posts">查看全部 {{ summary.posts }} 篇</GlowButton>
         </div>
       </section>
 
-      <!-- Activity Heatmap -->
       <section class="home-page__section home-page__heatmap">
         <SectionHeader label="ACTIVITY" title="活动热力图" />
         <TerminalCard title="activity-heatmap.json" prompt="$">
@@ -115,7 +129,6 @@ const channelLinks = [
       </section>
 
       <DividerDecorate label="CHANNEL" />
-
 
       <section class="home-page__section">
         <SectionHeader label="PROJECTS" title="折腾项目" />
@@ -143,7 +156,7 @@ const channelLinks = [
           </TerminalCard>
         </div>
         <div class="home-page__section-footer">
-          <GlowButton variant="secondary" to="/projects">查看全部 {{ summary.projects }} 个 →</GlowButton>
+          <GlowButton variant="secondary" to="/projects">查看全部 {{ summary.projects }} 个</GlowButton>
         </div>
       </section>
 
@@ -153,7 +166,7 @@ const channelLinks = [
         <SectionHeader label="FRIENDS" title="友链网络" />
         <div class="home-page__friends">
           <div
-            v-for="friend in FRIENDS.slice(0, 6)"
+            v-for="friend in FRIENDS"
             :key="friend.url"
             class="home-page__friend-item"
           >
@@ -170,7 +183,7 @@ const channelLinks = [
           </div>
         </div>
         <div class="home-page__section-footer">
-          <GlowButton variant="secondary" to="/friends">全部 {{ summary.friends }} 位友链 →</GlowButton>
+          <GlowButton variant="secondary" to="/friends">查看 friends 页面</GlowButton>
         </div>
       </section>
 
@@ -189,10 +202,11 @@ const channelLinks = [
 <style scoped>
 .home-page { min-height: 100vh; background: transparent; color: var(--theme-on-background); }
 
-.home-page__ticker { border-bottom: 1px solid var(--theme-border); background: transparent; }
+.home-page__ticker { border-bottom: 1px solid var(--theme-border); background: var(--theme-surface); }
 
 .home-page__hero {
   display: flex; min-height: min(580px, 85vh);
+  /* 调整一: 去掉 hero 区和下方 section 之间的贴边线 */
   animation: home-rise 360ms cubic-bezier(.2,.8,.2,1) both;
 }
 .home-page__hero-identity {
@@ -200,8 +214,8 @@ const channelLinks = [
   padding: var(--theme-spacing-xl) var(--theme-spacing-xl) var(--theme-spacing-xl) max(2rem, calc((100vw - 1100px) / 2));
   gap: var(--theme-spacing-md);
 }
-.home-page__hero-portrait { flex: 0.9; position: relative; max-height: 580px; }
-.home-page__hero-portrait img { width: 100%; height: 100%; object-fit: contain; display: block; border: none; outline: none; }
+.home-page__hero-portrait { flex: 0.9; overflow: hidden; position: relative; max-height: 580px; }
+.home-page__hero-portrait img { width: 100%; height: 100%; object-fit: contain; display: block; }
 .home-page__portrait-overlay { position: absolute; bottom: 1rem; right: 1rem; }
 .home-page__portrait-label { font-size: var(--theme-font-size-xs) !important; opacity: 0.5; }
 
@@ -226,8 +240,16 @@ const channelLinks = [
 .project-item__tech { display: flex; flex-wrap: wrap; gap: 0.35rem; }
 .home-page__section-footer { display: flex; justify-content: flex-end; margin-top: var(--theme-spacing-sm); }
 
+.home-page__contributor { margin-bottom: var(--theme-spacing-lg); }
+
+.home-page__heatmap :deep(.activity-heatmap) { padding: var(--theme-spacing-sm) 0; }
+.home-page__heatmap :deep(.ah-header) { margin-bottom: var(--theme-spacing-sm); }
+.home-page__heatmap :deep(.ah-grid) { padding-left: 0; }
+.home-page__heatmap :deep(.ah-year-nav) { flex-direction: row; flex-wrap: wrap; }
+.home-page__heatmap :deep(.ah-year-btn) { height: 24px; min-width: 36px; }
+
 .home-page__friends { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: var(--theme-spacing-sm); margin-bottom: var(--theme-spacing-md); }
-.home-page__friend-item { display: flex; align-items: center; gap: 0.75rem; padding: 0.6rem 0.85rem; background: transparent; border: 1px solid var(--theme-border); border-radius: var(--theme-radius-md); transition: border-color 160ms ease, transform 160ms ease; }
+.home-page__friend-item { display: flex; align-items: center; gap: 0.75rem; padding: 0.6rem 0.85rem; background: var(--theme-surface); border: 1px solid var(--theme-border); border-radius: var(--theme-radius-md); transition: border-color 160ms ease, transform 160ms ease; }
 .home-page__friend-item:hover { border-color: var(--theme-primary); transform: translateX(2px); }
 .home-page__friend-info { flex: 1; display: flex; flex-direction: column; gap: 0.1rem; min-width: 0; }
 .home-page__friend-name { font-weight: 600; font-size: var(--theme-font-size-sm); }
@@ -248,24 +270,5 @@ const channelLinks = [
   .home-page__hero-portrait { height: 260px; max-height: 260px; flex: none; }
   .home-page__posts, .home-page__projects { grid-template-columns: 1fr; }
   .home-page__stats { gap: var(--theme-spacing-lg); }
-}
-
-/* Heatmap section */
-.home-page__heatmap :deep(.activity-heatmap) {
-  padding: var(--theme-spacing-sm) 0;
-}
-.home-page__heatmap :deep(.ah-header) {
-  margin-bottom: var(--theme-spacing-sm);
-}
-.home-page__heatmap :deep(.ah-grid) {
-  padding-left: 0;
-}
-.home-page__heatmap :deep(.ah-year-nav) {
-  flex-direction: row;
-  flex-wrap: wrap;
-}
-.home-page__heatmap :deep(.ah-year-btn) {
-  height: 24px;
-  min-width: 36px;
 }
 </style>
