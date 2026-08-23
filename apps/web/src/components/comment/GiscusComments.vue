@@ -16,15 +16,10 @@ import { giscusConfig } from '@/config/giscus'
 const { theme } = useTheme()
 const containerRef = ref<HTMLDivElement | null>(null)
 
-// 计算当前 giscus 主题 CSS URL（相对于 public 目录）
+// 计算当前 giscus 主题名称
+// giscus 内置主题：dark=transparent_dark, light=noborder_light（无边框浅色）
 function getThemeUrl(isDark: boolean): string {
-  // 使用 preferred_color_scheme 让 giscus 跟随系统/浏览器主题;
-  // blog 主题切换时通过 postMessage 覆盖为自定义主题 CSS
-  const origin = typeof window !== 'undefined' ? window.location.origin : ''
-  // postMessage 切换主题时用自定义 CSS（见 updateGiscusTheme）
-  return isDark
-    ? `${origin}/giscus-theme-dark.css`
-    : `${origin}/giscus-theme-light.css`
+  return isDark ? 'transparent_dark' : 'noborder_light'
 }
 
 // 注入 giscus script 并初始化
@@ -45,7 +40,7 @@ function loadGiscus() {
   script.setAttribute('data-reactions-enabled', giscusConfig.reactionsEnabled)
   script.setAttribute('data-emit-metadata', giscusConfig.emitMetadata)
   script.setAttribute('data-input-position', giscusConfig.inputPosition)
-  script.setAttribute('data-theme', 'preferred_color_scheme')
+  script.setAttribute('data-theme', 'transparent_dark')
   script.setAttribute('data-lang', giscusConfig.lang)
   script.setAttribute('data-loading', 'lazy')
   script.crossOrigin = 'anonymous'
