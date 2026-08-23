@@ -3,12 +3,16 @@
 // Usage: <GlitchText>OFFLINE</GlitchText>
 defineProps<{
   active?: boolean
+  tone?: 'surface' | 'primary'
 }>()
 </script>
 
 <template>
   <span
-    :class="['glitch-text', { 'glitch-text--active': active ?? true }]"
+    :class="['glitch-text', {
+      'glitch-text--active': active ?? true,
+      'glitch-text--primary': tone === 'primary'
+    }]"
     :data-text="$slots.default?.()?.[0]?.children ?? ''"
   >
     <slot />
@@ -23,6 +27,10 @@ defineProps<{
   font-weight: 800;
   letter-spacing: -0.01em;
   color: var(--theme-on-surface);
+}
+
+.glitch-text--primary {
+  color: var(--theme-primary);
 }
 
 /* Default active state animation */

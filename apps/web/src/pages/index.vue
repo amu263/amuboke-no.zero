@@ -57,7 +57,7 @@ const socialLinks = [
 
     <header class="home-page__hero">
       <div class="home-page__hero-identity">
-        <GlitchText class="home-page__brand">AMU LIVE STYLE</GlitchText>
+        <GlitchText class="home-page__brand" tone="primary">AMU LIVE STYLE</GlitchText>
         <p class="home-page__tagline">一个人的长期档案，持续更新中</p>
         <blockquote class="home-page__quote">
           <span class="home-page__quote-zh">过人的智慧是人类最大的财富</span>
