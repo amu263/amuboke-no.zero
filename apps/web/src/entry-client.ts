@@ -4,6 +4,7 @@ import App from './app.vue'
 import { POSTS, postRoute } from './content/build-time-index'
 import { vuetify } from './plugins/vuetify'
 import { routes, scrollBehavior, registerSeoGuard } from './router'
+import { registerNavigationLoading } from './router-loading'
 import 'virtual:uno.css'
 // 单元 2: tokens.scss 输出 :root/.v-theme--dark 下的 --theme-* CSS 变量
 // 必须在 base.css 之前 import，这样 base 层可以消费这些变量
@@ -25,6 +26,7 @@ export const createApp = ViteSSG(
     // Register scroll restoration + SEO guard
     if (isClient) {
       registerSeoGuard(router)
+      registerNavigationLoading(router)
     }
   }
 )

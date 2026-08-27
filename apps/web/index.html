@@ -1,14 +1,60 @@
 <!doctype html>
 <html lang="zh-CN">
   <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>amuboke-no.zero</title>
-    <link rel="icon" href="/favicon.ico" type="image/x-icon" />
-    <meta name="description" content="个人博客 · 极客风骨架" />
+    <link rel="icon" href="/favicon.ico" type="image/x-icon">
+    <meta name="description" content="个人博客 · 极客风骨架">
+    <!-- Apply the persisted theme before CSS/layout can paint. -->
+    <script>
+      (() => {
+        const key = 'amuboke-no.zero:theme'
+        let theme = 'dark'
+        try {
+          const saved = window.localStorage.getItem(key)
+          if (saved === 'light' || saved === 'dark') theme = saved
+        } catch (_) {}
+        document.documentElement.classList.add('v-theme--' + theme, 'booting')
+        document.documentElement.style.colorScheme = theme
+      })()
+    </script>
+    <style>
+      html { scrollbar-gutter: stable; }
+      html.booting, html.booting body { overflow: hidden !important; }
+      html.v-theme--dark, html.v-theme--dark body { background: #090b0e; color: #d4d8e0; }
+      html.v-theme--light, html.v-theme--light body { background: #f0f2f5; color: #1a1d24; }
+      /* Stable full-screen curtain: only opacity changes, never size or position. */
+      #app-loading {
+        position: fixed; inset: 0; z-index: 2147483647;
+        display: grid; place-items: center; contain: layout paint style;
+        font-size: 16px; line-height: 1;
+        background: var(--boot-background, #090b0e); color: var(--boot-foreground, #f0f2f5);
+        font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+        opacity: 1;
+      }
+      html.v-theme--dark #app-loading { --boot-background: #090b0e; --boot-foreground: #d4d8e0; --boot-accent: #e8a83e; }
+      html.v-theme--light #app-loading { --boot-background: #f0f2f5; --boot-foreground: #1a1d24; --boot-accent: #2fb5a0; }
+      #app-loading-content { display: grid; justify-items: center; align-content: center; width: 520px; height: 96px; gap: 14px; contain: layout paint; }
+      #app-loading-logo { color: inherit; white-space: nowrap; font-size: 40px; line-height: 1; font-weight: 700; letter-spacing: 0.14em; }
+      #app-loading-caption { color: var(--boot-accent, #e8a83e); font-size: 10px; line-height: 1; letter-spacing: 0.1em; }
+      #app-loading-dots { display: flex; gap: 6px; height: 6px; align-items: flex-start; }
+      #app-loading-dots span { position: relative; top: 0; left: 0; width: 6px; height: 6px; border-radius: 50%; background: currentColor; opacity: 0.7; animation: app-loading-bounce 700ms ease-in-out infinite; }
+      #app-loading-dots span:nth-child(2) { animation-delay: 100ms; }
+      #app-loading-dots span:nth-child(3) { animation-delay: 200ms; }
+      @keyframes app-loading-bounce { 0%, 60%, 100% { top: 0; } 30% { top: -6px; } }
+      @media (prefers-reduced-motion: reduce) { #app-loading-dots span { animation-duration: 1400ms; } }
+    </style>
   </head>
   <body>
     <div id="app"></div>
+    <div id="app-loading" role="status" aria-live="polite" aria-label="AMU LIVE STYLE 正在启动">
+      <div id="app-loading-content">
+        <div id="app-loading-caption">AMU SYSTEM / BOOT</div>
+        <div id="app-loading-logo">AMU LIVE STYLE</div>
+        <div id="app-loading-dots" aria-hidden="true"><span></span><span></span><span></span></div>
+      </div>
+    </div>
     <script type="module" src="/src/entry-client.ts"></script>
   </body>
 </html>

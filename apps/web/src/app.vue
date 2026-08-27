@@ -1,12 +1,32 @@
 <script setup lang="ts">
-import { ref } from 'vue'
-import { useTheme } from '@/composables/useTheme'
+import { nextTick, onMounted, ref } from 'vue'
+import { useRouter } from 'vue-router'
+import { useNavigationLoading } from '@/router-loading'
 import AppBar from '@/components/layout/AppBar.vue'
 import SearchModal from '@/components/search/SearchModal.vue'
 
-// syncRootClass 是 useTheme 内部函数，主题切换由 useTheme 内部自动同步
-
 const searchOpen = ref(false)
+const router = useRouter()
+const { status: navigationStatus } = useNavigationLoading()
+
+// The static #app-loading element in index.html owns the pre-hydration pixels.
+// Remove it only after the initial route and the first hydrated DOM are ready.
+onMounted(async () => {
+  await router.isReady()
+  await nextTick()
+  const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+  await new Promise<void>((resolve) => window.setTimeout(resolve, reducedMotion ? 120 : 2500))
+  const overlay = document.getElementById('app-loading')
+  if (!overlay) return
+  if (reducedMotion) {
+    document.documentElement.classList.remove('booting')
+    overlay.remove()
+    return
+  }
+  // Remove the opaque curtain in one step; no two animation layers overlap.
+  document.documentElement.classList.remove('booting')
+  overlay.remove()
+})
 function openSearch() {
   searchOpen.value = true
 }
@@ -16,13 +36,21 @@ function openSearch() {
   <!-- AGENTS.md §5 #18: tokenized real DOM grid layer must sit behind Vuetify.
        Must be BEFORE <v-app> in template order (Vue template order = DOM order). -->
   <div class="grid-bg" aria-hidden="true"></div>
-  <v-app>
+  <v-app :aria-busy="navigationStatus === 'loading'">
+    <div
+      v-if="navigationStatus === 'loading'"
+      class="route-loading"
+      role="status"
+      aria-live="polite"
+      aria-label="页面加载中"
+    >
+      <span class="route-loading__mark" aria-hidden="true"></span>
+      <span>加载中…</span>
+    </div>
     <AppBar @open-search="openSearch" />
     <v-main>
       <router-view v-slot="{ Component }">
-        <transition name="page-fade" mode="out-in">
-          <component :is="Component" />
-        </transition>
+        <component :is="Component" />
       </router-view>
     </v-main>
     <SearchModal v-model="searchOpen" />
@@ -103,33 +131,33 @@ function openSearch() {
   }
 }
 
-/* ── Page Transition — 极客风快速淡入淡出 ────────────────────────── */
-.page-fade-enter-active {
-  animation: page-fade-in 180ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+/* Route navigation owns the visual hand-off; this layer never covers the grid. */
+.route-loading {
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+  display: grid;
+  place-content: center;
+  gap: 0.75rem;
+  color: var(--theme-on-background);
+  background: var(--theme-background);
+  font-family: var(--theme-font-mono);
+  font-size: var(--theme-font-size-sm);
+  letter-spacing: 0.04em;
+  pointer-events: all;
 }
-.page-fade-leave-active {
-  animation: page-fade-out 120ms cubic-bezier(0.4, 0, 1, 1) both;
+.route-loading__mark {
+  width: 2.25rem;
+  height: 2.25rem;
+  margin: 0 auto;
+  border: 2px solid var(--theme-border);
+  border-top-color: var(--theme-primary);
+  border-radius: 50%;
+  animation: route-loading-spin 700ms linear infinite;
 }
+@keyframes route-loading-spin { to { transform: rotate(360deg); } }
 
-@keyframes page-fade-in {
-  from {
-    opacity: 0;
-    transform: translateY(6px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-@keyframes page-fade-out {
-  from {
-    opacity: 1;
-    transform: translateY(0);
-  }
-  to {
-    opacity: 0;
-    transform: translateY(-3px);
-  }
+@media (prefers-reduced-motion: reduce) {
+  .route-loading__mark { animation: none; }
 }
 </style>

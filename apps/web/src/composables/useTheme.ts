@@ -10,7 +10,7 @@
 // 它不直接调用 useTheme()，而是返回一个工厂 useTheme()
 // 调用站点：const { theme, toggle, set } = useTheme()
 
-import { computed, ref, watch } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import { useTheme as useVuetifyTheme } from 'vuetify'
 import { palettes, THEME_STORAGE_KEY, type ThemeName } from '@/styles/tokens'
 
@@ -50,8 +50,9 @@ function persist(name: ThemeName): void {
 // 单例：所有调用 useTheme() 的组件共享同一个 state
 // 初始化顺序：
 //   1. SSR 阶段（无 window）→ 默认 'dark'
-//   2. 客户端首次 setup → 同步读 localStorage，立即应用 → 避免 hydration mismatch
-//   3. 任何后续对 Vuetify theme 的修改 → 反向同步进 current + persist
+//   2. 客户端首次 setup → 同步读 localStorage，仅同步状态/根类（HTML 已在首绘前设类）
+//   3. mounted 后再应用 Vuetify name，避免 SSG 默认主题与 hydration 结构冲突
+//   4. 任何后续对 Vuetify theme 的修改 → 反向同步进 current + persist
 const current = ref<ThemeName>('dark')
 let bound = false
 
@@ -61,17 +62,20 @@ export function useTheme() {
   if (!bound) {
     bound = true
 
-    // 客户端首次进入：同步读 localStorage 并立刻把 Vuetify theme 切到持久化值。
-    // 这里在 setup 同步段跑，所以 onMounted 之前 component setup 已经看到正确状态。
+    // 客户端首次进入：同步读取状态；Vuetify name 延迟到 mounted，保持 hydration 稳定。
     if (typeof window !== 'undefined') {
       const saved = readPersisted()
       const initial: ThemeName = saved ?? 'dark'
-      if (vuetifyTheme.global.name.value !== initial) {
-        vuetifyTheme.global.name.value = initial
-      }
+      // The HTML bootstrap already selected the persisted class before paint.
+      // Keep Vuetify's SSR name stable through hydration; switch it after mount.
       current.value = initial
       syncRootClass(initial)
     }
+
+    onMounted(() => {
+      vuetifyTheme.global.name.value = current.value
+      syncRootClass(current.value)
+    })
 
     // 任何方式改变 Vuetify 主题（其它组件 / 调试器 / HMR）都同步进 current
     watch(
@@ -94,6 +98,7 @@ export function useTheme() {
     if (typeof window !== 'undefined') {
       persist(name)
       syncRootClass(name)
+      document.documentElement.style.colorScheme = name
     }
   }
 
