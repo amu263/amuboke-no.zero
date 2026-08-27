@@ -29,8 +29,8 @@ const tickerItems = computed(() => [
 const channelLinks = [
   { to: '/posts', label: '观察', desc: '文章与笔记' },
   { to: '/projects', label: '折腾', desc: '项目与实验' },
-  { to: '/listen', label: '听见', desc: '音乐档案' },
   { to: '/gallery', label: '看见', desc: '图集与照片' },
+  { to: '/listen', label: '听见', desc: '音乐档案' },
 ]
 const contributors = [
   { name: 'DeepSeek Harness' },
