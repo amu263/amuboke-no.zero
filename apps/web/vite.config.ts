@@ -209,11 +209,14 @@ function optimizePublicImages() {
       const replacements = new Map<string, string>()
       for (const file of rasterFiles) {
         const webp = file.replace(/\.(png|jpe?g)$/i, '.webp')
-        await sharp(file, { failOn: 'none' }).resize({ width: 1600, withoutEnlargement: true }).webp({ quality: 82, effort: 4 }).toFile(webp)
-        const relative = file.slice(outDir.length + 1).replaceAll('\\', '/')
-        replacements.set('/' + relative, '/' + relative.replace(/\.(png|jpe?g)$/i, '.webp'))
+        try {
+          await sharp(file, { failOn: 'none' }).resize({ width: 1600, withoutEnlargement: true }).webp({ quality: 82, effort: 4 }).toFile(webp)
+          const relative = file.slice(outDir.length + 1).replaceAll('\\', '/')
+          replacements.set('/' + relative, '/' + relative.replace(/\.(png|jpe?g)$/i, '.webp'))
+        } catch (error) {
+          console.warn('[image-optimizer] skipped ' + file + ':', error)
+        }
         // Keep the original in dist: Windows may still hold Vite's copied file.
-        // All generated HTML/JS references below point to the WebP instead.
       }
       if (!replacements.size) return
       const textFiles = (await collectFiles(outDir)).filter((file) => /\.(html|js|css|json|map)$/i.test(file))
