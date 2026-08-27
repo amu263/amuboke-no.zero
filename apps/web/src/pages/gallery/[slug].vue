@@ -73,33 +73,23 @@ const rowHeight = ref(280)
 onMounted(() => {
   if (!gallery.value?.photos) return
 
-  // Preload first image to get row height
-  const firstImg = new Image()
-  firstImg.onload = function() {
-    const containerWidth = 1200
-    rowHeight.value = Math.min(320, Math.max(180, containerWidth / (firstImg.naturalWidth / firstImg.naturalHeight)))
-    
-    // Load all images to get aspect ratios
-    const promises = gallery.value!.photos!.map((p) => {
-      return new Promise<PhotoWithRatio>((resolve) => {
-        const img = new Image()
-        img.onload = function() {
-          resolve({ ...p, aspectRatio: img.naturalWidth / img.naturalHeight })
-        }
-        img.onerror = function() {
-          resolve({ ...p, aspectRatio: 1 })
-        }
-        img.src = p.src
-      })
-    })
-    
-    Promise.all(promises).then(function(loaded) {
-      photosWithRatio.value = loaded
-      nextTick(updateScrollButtons)
-    })
-  }
-  firstImg.src = gallery.value.photos[0]?.src ?? ''
+  // Render the strip immediately. Individual images refine their ratio after loading.
+  photosWithRatio.value = gallery.value.photos.map((photo) => ({
+    ...photo,
+    aspectRatio: 4 / 3
+  }))
+  nextTick(updateScrollButtons)
 })
+
+function updatePhotoRatio(photo: PhotoWithRatio, event: Event): void {
+  const image = event.currentTarget as HTMLImageElement
+  if (!image.naturalWidth || !image.naturalHeight) return
+
+  const aspectRatio = image.naturalWidth / image.naturalHeight
+  photosWithRatio.value = photosWithRatio.value.map((item) =>
+    item.src === photo.src ? { ...item, aspectRatio } : item
+  )
+}
 
 function getPhotoWidth(photo: PhotoWithRatio): number {
   return (photo.aspectRatio ?? 1) * rowHeight.value
@@ -181,6 +171,7 @@ function getPhotoWidth(photo: PhotoWithRatio): number {
                 class="gallery-cell__img"
                 loading="lazy"
                 decoding="async"
+                @load="updatePhotoRatio(photo, $event)"
               />
               <div class="gallery-cell__overlay">
                 <svg class="gallery-cell__icon" viewBox="0 0 24 24" aria-hidden="true">

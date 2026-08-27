@@ -2,7 +2,7 @@
 title: GPT Image 2 的七种歌声舞台：萌音莜奈插画图集
 date: 2026-08-25
 tags: [AI绘画, GPT Image 2, 哔哩哔哩, 虚拟主播, 萌音莜奈, 插画]
-cover: /images/posts/meng-yin-you-nai-gpt-image-2/17.png
+cover: /images/posts/meng-yin-you-nai-gpt-image-2/17.webp
 summary: 用 GPT Image 2 为哔哩哔哩虚拟日语歌势主播萌音莜奈生成的一组插画记录：从蓝色舞台、粉色戏剧到黑白留白，看看同一个角色如何在不同视觉情绪里变成不同的歌。
 ---
 

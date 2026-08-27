@@ -14,16 +14,8 @@ const { status: navigationStatus } = useNavigationLoading()
 onMounted(async () => {
   await router.isReady()
   await nextTick()
-  const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
-  await new Promise<void>((resolve) => window.setTimeout(resolve, reducedMotion ? 120 : 2500))
   const overlay = document.getElementById('app-loading')
   if (!overlay) return
-  if (reducedMotion) {
-    document.documentElement.classList.remove('booting')
-    overlay.remove()
-    return
-  }
-  // Remove the opaque curtain in one step; no two animation layers overlap.
   document.documentElement.classList.remove('booting')
   overlay.remove()
 })

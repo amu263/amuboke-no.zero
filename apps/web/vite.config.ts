@@ -3,11 +3,12 @@ import vue from '@vitejs/plugin-vue'
 import vuetify from 'vite-plugin-vuetify'
 import UnoCSS from 'unocss/vite'
 import { fileURLToPath, URL } from 'node:url'
-import { readFileSync, readdirSync } from 'node:fs'
+import { promises as fs, readFileSync, readdirSync } from 'node:fs'
 import { join, dirname } from 'node:path'
 import matter from 'gray-matter'
 import type { ViteSSGOptions } from 'vite-ssg'
 import Markdown from './src/plugins/markdown-loader'
+import sharp from 'sharp'
 import viteSharp from 'vite-plugin-sharp'
 
 // ── Per-post SEO: read frontmatter from markdown files using Node.js ──────────────────────────────────
@@ -183,6 +184,48 @@ const ssgOptions: ViteSSGOptions = {
 
 // Vite + vite-ssg + Vuetify + UnoCSS + 自写 markdown loader
 // 详见 AGENTS.md §5
+async function collectFiles(directory: string): Promise<string[]> {
+  const entries = await fs.readdir(directory, { withFileTypes: true })
+  const files: string[] = []
+  for (const entry of entries) {
+    const path = join(directory, entry.name)
+    if (entry.isDirectory()) files.push(...await collectFiles(path))
+    else files.push(path)
+  }
+  return files
+}
+
+function optimizePublicImages() {
+  let outDir = 'dist'
+  return {
+    name: 'optimize-public-images',
+    apply: 'build' as const,
+    configResolved(config: { build: { outDir: string } }) {
+      outDir = config.build.outDir
+    },
+    async closeBundle() {
+      const files = await collectFiles(outDir)
+      const rasterFiles = files.filter((file) => /\.(png|jpe?g)$/i.test(file))
+      const replacements = new Map<string, string>()
+      for (const file of rasterFiles) {
+        const webp = file.replace(/\.(png|jpe?g)$/i, '.webp')
+        await sharp(file).resize({ width: 1600, withoutEnlargement: true }).webp({ quality: 82, effort: 4 }).toFile(webp)
+        const relative = file.slice(outDir.length + 1).replaceAll('\\', '/')
+        replacements.set('/' + relative, '/' + relative.replace(/\.(png|jpe?g)$/i, '.webp'))
+        // Keep the original in dist: Windows may still hold Vite's copied file.
+        // All generated HTML/JS references below point to the WebP instead.
+      }
+      if (!replacements.size) return
+      const textFiles = (await collectFiles(outDir)).filter((file) => /\.(html|js|css|json|map)$/i.test(file))
+      for (const file of textFiles) {
+        let text = await fs.readFile(file, 'utf8')
+        for (const [from, to] of replacements) text = text.replaceAll(from, to)
+        await fs.writeFile(file, text)
+      }
+    }
+  }
+}
+
 export default defineConfig({
   resolve: {
     alias: {
@@ -195,6 +238,7 @@ export default defineConfig({
     vuetify({ autoImport: true, styles: { configFile: 'src/styles/vuetify-settings.scss' } }),
     UnoCSS(),
     Markdown(),
+    optimizePublicImages(),
     // LCP 优化：统一输出 WebP 格式，质量 90%
     viteSharp({
       // @ts-ignore vite-plugin-sharp types are incomplete for webp quality/format
