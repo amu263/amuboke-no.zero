@@ -48,7 +48,8 @@ const trackCount = computed(() => props.listen.tracks?.length ?? 0)
             :src="listen.cover ?? '/images/placeholder.svg'"
             :alt="listen.title + ' 专辑封面'"
             class="listen-card__cover-img"
-            loading="lazy"
+            loading="eager"
+            fetchpriority="high"
           />
         </figure>
         <div class="listen-card__cover-back">
