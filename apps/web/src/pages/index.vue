@@ -244,7 +244,7 @@ const socialLinks = [
   padding: var(--theme-spacing-xl) var(--theme-spacing-xl) var(--theme-spacing-xl) max(2rem, calc((100vw - 1100px) / 2));
   gap: var(--theme-spacing-md);
 }
-.home-page__tag-cloud { position: absolute; left: 35%; right: 28%; top: 56%; height: 300px; z-index: 0; overflow: hidden; contain: layout paint; pointer-events: none; }
+.home-page__tag-cloud { position: absolute; left: 38%; right: 36%; top: 64%; height: 250px; z-index: 0; overflow: hidden; contain: layout paint; pointer-events: none; }
 .home-page__hero-identity, .home-page__hero-portrait { position: relative; z-index: 2; }
 .home-page__hero-portrait { flex: 0.9; overflow: hidden; max-height: 580px; }
 .home-page__hero-portrait img { width: 100%; height: 100%; object-fit: contain; display: block; }
