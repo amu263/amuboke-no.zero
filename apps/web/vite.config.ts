@@ -208,6 +208,8 @@ function optimizePublicImages() {
       const rasterFiles = files.filter((file) => /\.(png|jpe?g)$/i.test(file))
       const replacements = new Map<string, string>()
       for (const file of rasterFiles) {
+        const stats = await fs.stat(file)
+        if (stats.size < 10 * 1024) continue
         const webp = file.replace(/\.(png|jpe?g)$/i, '.webp')
         try {
           await sharp(file, { failOn: 'none' }).resize({ width: 1600, withoutEnlargement: true }).webp({ quality: 82, effort: 4 }).toFile(webp)
