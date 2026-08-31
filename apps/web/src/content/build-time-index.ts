@@ -92,6 +92,18 @@ export const POSTS_BY_TAG: Readonly<Record<string, readonly PostMeta[]>> = Objec
   }, {})
 )
 
+export interface PostTagCloudItem {
+  tag: string
+  count: number
+}
+
+/** 文章标签云：构建期统计，新增文章标签会自动进入。 */
+export const POST_TAG_CLOUD: readonly PostTagCloudItem[] = Object.freeze(
+  Object.entries(POSTS_BY_TAG)
+    .map(([tag, posts]) => ({ tag, count: posts.length }))
+    .sort((a, b) => b.count - a.count || a.tag.localeCompare(b.tag))
+)
+
 // ─────────────────────────────────────────────────────────────────────────────
 // gallery / projects / friends (.json)：AGENTS §3 字段约定
 // ─────────────────────────────────────────────────────────────────────────────

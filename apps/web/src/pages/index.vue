@@ -1,8 +1,9 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { BILIBILI_PROFILE_URL } from '@/data/social'
-import { POSTS, PROJECTS, GALLERIES, FRIENDS, LISTENS, getContentSummary, ACTIVITY_HEATMAP } from '@/content/build-time-index'
+import { POSTS, PROJECTS, GALLERIES, FRIENDS, LISTENS, POST_TAG_CLOUD, getContentSummary, ACTIVITY_HEATMAP } from '@/content/build-time-index'
 import ActivityHeatmap from '@/components/home/ActivityHeatmap.vue'
+import TagCloud from '@/components/home/TagCloud.vue'
 import {
   GlowButton,
   TerminalCard,
@@ -108,6 +109,9 @@ const socialLinks = [
           </a>
         </nav>
       </div>
+      <section class="home-page__tag-cloud" aria-label="文章标签云">
+        <TagCloud :tags="POST_TAG_CLOUD" />
+      </section>
       <div class="home-page__hero-portrait">
         <img src="/img/portrait-hero.png" alt="Creator portrait" width="1254" height="1254" loading="eager" fetchpriority="high" decoding="sync" />
         <div class="home-page__portrait-overlay">
@@ -229,6 +233,8 @@ const socialLinks = [
 .home-page__ticker { border-bottom: 1px solid var(--theme-border); background: var(--theme-surface); }
 
 .home-page__hero {
+  position: relative;
+  isolation: isolate;
   display: flex; min-height: min(580px, 85vh);
   /* 调整一: 去掉 hero 区和下方 section 之间的贴边线 */
   animation: home-rise 360ms cubic-bezier(.2,.8,.2,1) both;
@@ -238,7 +244,9 @@ const socialLinks = [
   padding: var(--theme-spacing-xl) var(--theme-spacing-xl) var(--theme-spacing-xl) max(2rem, calc((100vw - 1100px) / 2));
   gap: var(--theme-spacing-md);
 }
-.home-page__hero-portrait { flex: 0.9; overflow: hidden; position: relative; max-height: 580px; }
+.home-page__tag-cloud { position: absolute; left: 35%; right: 28%; top: 56%; height: 300px; z-index: 0; overflow: hidden; contain: layout paint; pointer-events: none; }
+.home-page__hero-identity, .home-page__hero-portrait { position: relative; z-index: 2; }
+.home-page__hero-portrait { flex: 0.9; overflow: hidden; max-height: 580px; }
 .home-page__hero-portrait img { width: 100%; height: 100%; object-fit: contain; display: block; }
 .home-page__portrait-overlay { position: absolute; bottom: 1rem; right: 1rem; }
 .home-page__portrait-label { font-size: var(--theme-font-size-xs) !important; opacity: 0.5; }
@@ -297,7 +305,8 @@ const socialLinks = [
 @media (max-width: 768px) {
   .home-page__hero { flex-direction: column; min-height: auto; }
   .home-page__hero-identity { padding: var(--theme-spacing-lg) var(--theme-spacing-md); align-items: flex-start; }
-  .home-page__hero-portrait { height: 260px; max-height: 260px; flex: none; }
+  .home-page__hero-portrait { height: 260px; max-height: 260px; flex: none; order: 2; }
+  .home-page__tag-cloud { position: relative; inset: auto; width: 100%; height: 180px; flex: none; order: 3; padding: 0 var(--theme-spacing-md); }
   .home-page__posts, .home-page__projects { grid-template-columns: 1fr; }
   .home-page__channels,
   .home-page__stats { grid-template-columns: repeat(4, minmax(0, 1fr)); width: 100%; }
