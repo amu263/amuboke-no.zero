@@ -1,24 +1,18 @@
 <script setup lang="ts">
-import { nextTick, onMounted, ref } from 'vue'
-import { useRouter } from 'vue-router'
+import { ref } from 'vue'
 import { useNavigationLoading } from '@/router-loading'
+import { useBootSplash } from '@/composables/useBootSplash'
 import AppBar from '@/components/layout/AppBar.vue'
 import SearchModal from '@/components/search/SearchModal.vue'
 
 const searchOpen = ref(false)
-const router = useRouter()
 const { status: navigationStatus } = useNavigationLoading()
 
-// The static #app-loading element in index.html owns the pre-hydration pixels.
-// Remove it only after the initial route and the first hydrated DOM are ready.
-onMounted(async () => {
-  await router.isReady()
-  await nextTick()
-  const overlay = document.getElementById('app-loading')
-  if (!overlay) return
-  document.documentElement.classList.remove('booting')
-  overlay.remove()
-})
+// 单元 7：启动 Splash 的 DOM 与关键 CSS 在 index.html（预 hydration 帘幕，
+// 不在 #app 内，因此不参与 hydration）。这里只接管它的退出时序：
+// 首次进入才播放 → 最短可见 → 淡出 → 移除帘幕并解锁滚动。
+useBootSplash()
+
 function openSearch() {
   searchOpen.value = true
 }
@@ -122,6 +116,28 @@ function openSearch() {
     background: transparent !important;
   }
 }
+
+/* Unit 7: while the startup curtain is up (html.booting, set by the inline boot
+   script before first paint and removed when the curtain starts fading), every
+   entrance animation inside #app is frozen. Without this the unit-4 home
+   entrance would play behind an opaque curtain and be over before anyone saw it.
+   Scope note: #app only — the curtain itself lives outside #app, so it keeps
+   animating. `!important` is required: component <style> blocks are unlayered,
+   and unlayered normal declarations beat layered ones (AGENTS.md §5 #1).
+   The freeze is released exactly when the fade starts, because the entrance
+   animations use animation-fill-mode: both — freezing them any longer would
+   reveal a page stuck at opacity 0. */
+html.booting #app *,
+html.booting #app *::before,
+html.booting #app *::after {
+  animation-play-state: paused !important;
+}
+
+/* Unit 7 docking hand-off: while the curtain avatar is flying across the page
+   it becomes the homepage portrait, so that portrait waits hidden and is
+   revealed in the very same frame the curtain is removed. visibility (not
+   display) keeps the layout box measurable for the flight geometry. */
+html.boot-docking .home-page__hero-portrait { visibility: hidden; }
 
 /* Route navigation owns the visual hand-off; this layer never covers the grid. */
 .route-loading {

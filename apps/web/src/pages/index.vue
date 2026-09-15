@@ -113,7 +113,23 @@ const socialLinks = [
         <TagCloud :tags="POST_TAG_CLOUD" />
       </section>
       <div class="home-page__hero-portrait">
-        <img src="/img/portrait-hero.png" alt="Creator portrait" width="1254" height="1254" loading="eager" fetchpriority="high" decoding="sync" />
+        <div class="home-page__portrait-disc">
+          <!-- 间隔刻度圆框 + 水蓝流星：纯装饰，两个伪元素，不参与布局与命中测试 -->
+          <span class="home-page__portrait-halo" aria-hidden="true"></span>
+          <!-- data-boot-dock: 启动帘幕的归位锚点（见 composables/useBootSplash.ts）。
+               与帘幕中央的头像必须是同一张素材；圆角由这张 img 自己承担，
+               归位飞行因此一路保持圆形裁剪，落地即同一个圆。 -->
+          <img
+            data-boot-dock
+            src="/img/amu-portrait.webp"
+            alt="Creator portrait"
+            width="1024"
+            height="1024"
+            loading="eager"
+            fetchpriority="high"
+            decoding="sync"
+          />
+        </div>
         <div class="home-page__portrait-overlay">
           <GlitchText class="home-page__portrait-label">// ARCHIVE OWNER</GlitchText>
         </div>
@@ -246,9 +262,86 @@ const socialLinks = [
 }
 .home-page__tag-cloud { position: absolute; left: 38%; right: 36%; top: 64%; height: 250px; z-index: 0; overflow: hidden; contain: layout paint; pointer-events: none; }
 .home-page__hero-identity, .home-page__hero-portrait { position: relative; z-index: 2; }
-.home-page__hero-portrait { flex: 0.9; overflow: hidden; max-height: 580px; }
-.home-page__hero-portrait img { width: 100%; height: 100%; object-fit: contain; display: block; }
-.home-page__portrait-overlay { position: absolute; bottom: 1rem; right: 1rem; }
+.home-page__hero-portrait {
+  flex: 0.9;
+  display: grid;
+  place-items: center;
+  gap: var(--theme-spacing-sm);
+  padding: var(--theme-spacing-lg);
+  /* 圆盘与光晕环共用的尺寸；环靠 inset 负值外扩，所以容器不能 overflow: hidden */
+  --portrait-size: min(100%, 460px);
+  /* 水蓝：主强调色与信息色按 token 混出来，不引入脱离主题的固定色 */
+  --portrait-aqua: color-mix(in srgb, var(--theme-accent) 52%, var(--theme-info));
+}
+.home-page__portrait-disc {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: var(--portrait-size);
+  aspect-ratio: 1 / 1;
+}
+.home-page__portrait-disc img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
+  border-radius: 50%;
+}
+/* ── 间隔圆框 + 水蓝流星 ─────────────────────────────────────────────
+   两个伪元素都靠 mask 裁成一圈很窄的环带：
+     ::before = repeating-conic 刻度，静止不动的「间隔圆框」
+     ::after  = conic 流星（尾部渐隐 + 亮头），绕环匀速公转
+   都消费 --portrait-aqua，随主题自动改对比度；不引第三方动画库。 */
+.home-page__portrait-halo {
+  position: absolute;
+  inset: -22px;
+  border-radius: 50%;
+  pointer-events: none;
+}
+.home-page__portrait-halo::before,
+.home-page__portrait-halo::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+}
+.home-page__portrait-halo::before {
+  background: repeating-conic-gradient(
+    from 0deg,
+    var(--portrait-aqua) 0deg 1.4deg,
+    transparent 1.4deg 12deg
+  );
+  /* closest-side 是关键：radial-gradient 默认 farthest-corner，百分比按**对角**
+     距离算，环带会被推到四个角上、正交方向一个像素都看不到（本会话真实踩到）。
+     用了 closest-side 之后 100% = 元素半径，照片半径 = 100% - 22px，
+     于是环带落在 100%-20px ~ 100%-6px，正好贴着照片外侧。 */
+  -webkit-mask: radial-gradient(circle closest-side, transparent calc(100% - 20px), #000 calc(100% - 19px), #000 calc(100% - 6px), transparent calc(100% - 5px));
+  mask: radial-gradient(circle closest-side, transparent calc(100% - 20px), #000 calc(100% - 19px), #000 calc(100% - 6px), transparent calc(100% - 5px));
+  opacity: 0.55;
+  /* 与启动帘幕的 .boot-core__ticks 同向同速（逆时针 9s 一圈），
+     归位之后刻度环继续以同一角速度转——帘幕与首页是同一个环的两次现身。 */
+  animation: home-portrait-ticks 9s linear infinite;
+}
+.home-page__portrait-halo::after {
+  background: conic-gradient(
+    from 0deg,
+    transparent 0deg 278deg,
+    color-mix(in srgb, var(--portrait-aqua) 38%, transparent) 322deg,
+    var(--portrait-aqua) 356deg,
+    transparent 360deg
+  );
+  -webkit-mask: radial-gradient(circle closest-side, transparent calc(100% - 19px), #000 calc(100% - 18px), #000 calc(100% - 7px), transparent calc(100% - 6px));
+  mask: radial-gradient(circle closest-side, transparent calc(100% - 19px), #000 calc(100% - 18px), #000 calc(100% - 7px), transparent calc(100% - 6px));
+  filter: drop-shadow(0 0 6px color-mix(in srgb, var(--portrait-aqua) 65%, transparent));
+  animation: home-portrait-meteor 6.4s linear infinite;
+}
+@keyframes home-portrait-meteor {
+  to { transform: rotate(360deg); }   /* 流星顺时针 */
+}
+@keyframes home-portrait-ticks {
+  to { transform: rotate(-360deg); }  /* 刻度环逆时针（与帘幕一致） */
+}
+.home-page__portrait-overlay { position: absolute; bottom: 0.35rem; right: 0.85rem; }
 .home-page__portrait-label { font-size: var(--theme-font-size-xs) !important; opacity: 0.5; }
 
 .home-page__brand { font-size: clamp(2.5rem, 7vw, 5.5rem) !important; font-weight: 900; color: var(--theme-primary); letter-spacing: -0.02em; line-height: 0.9; animation: home-rise 280ms 200ms cubic-bezier(.2,.8,.2,1) both; }

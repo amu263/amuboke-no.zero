@@ -6,17 +6,56 @@
     <title>amuboke-no.zero</title>
     <link rel="icon" href="/favicon.ico" type="image/x-icon">
     <meta name="description" content="个人博客 · 极客风骨架">
-    <!-- Apply the persisted theme before CSS/layout can paint. -->
+    <!--
+      Boot bootstrap. Runs before any bundle so the persisted theme is on <html>
+      before first paint, and so the unit-7 startup splash can be gated without
+      a flash. The storage keys are duplicated here on purpose (this script
+      cannot import); keep them in sync with src/styles/tokens.ts
+      (THEME_STORAGE_KEY / BOOT_SPLASH_STORAGE_KEY).
+    -->
     <script>
       (() => {
-        const key = 'amuboke-no.zero:theme'
+        const THEME_KEY = 'amuboke-no.zero:theme'
+        const SPLASH_KEY = 'amuboke-no.zero:boot-splash'
+        const root = document.documentElement
+
         let theme = 'dark'
         try {
-          const saved = window.localStorage.getItem(key)
+          const saved = window.localStorage.getItem(THEME_KEY)
           if (saved === 'light' || saved === 'dark') theme = saved
         } catch (_) {}
-        document.documentElement.classList.add('v-theme--' + theme, 'booting')
-        document.documentElement.style.colorScheme = theme
+        root.classList.add('v-theme--' + theme)
+        root.style.colorScheme = theme
+
+        // Unit 7: the startup splash plays once per tab session. Deciding it here
+        // (before paint) is what makes a refresh skip it with zero flash.
+        //   ?boot=full           -> explicit replay/preview: always plays
+        //   already booted (tab) -> skip entirely
+        // The curtain always plays its full sequence when it plays: the owner
+        // decided (2026-09-15) that the first entry gets the complete animation
+        // even on machines that report prefers-reduced-motion: reduce (Windows
+        // "animation effects" off makes every Chromium report it). A forced
+        // preview deliberately does NOT consume the first-entry marker.
+        const forced = /[?&]boot=full(&|$)/.test(window.location.search)
+        let play = true
+        if (!forced) {
+          try {
+            if (window.sessionStorage.getItem(SPLASH_KEY) === '1') play = false
+            else window.sessionStorage.setItem(SPLASH_KEY, '1')
+          } catch (_) {}
+        }
+
+        if (!play) {
+          root.classList.add('boot-splash-off')
+        } else {
+          root.classList.add('booting')
+          // The curtain may never outlive the boot attempt: even if the app
+          // never hydrates, this watchdog clears the overlay.
+          window.setTimeout(() => {
+            root.classList.remove('booting')
+            root.classList.add('boot-splash-off')
+          }, 6000)
+        }
       })()
     </script>
     <style>
@@ -24,39 +63,441 @@
       html.booting, html.booting body { overflow: hidden !important; }
       html.v-theme--dark, html.v-theme--dark body { background: #090b0e; color: #d4d8e0; }
       html.v-theme--light, html.v-theme--light body { background: #f0f2f5; color: #1a1d24; }
-      /* Stable full-screen curtain: only opacity changes, never size or position. */
+
+      /* ────────────────────────────────────────────────────────────────────
+         Unit 7 — global startup splash (first entry only).
+
+         Intentionally UNLAYERED critical CSS: it has to paint before the
+         bundled stylesheet resolves, and it has to outrank every @layer
+         (AGENTS.md §5 #1 — unlayered declarations beat layered ones).
+         No Steam artwork, marks or third-party animation code: this is the
+         site's own HUD language (28px token grid + mono type + the amber /
+         teal accent), built only from CSS keyframes.
+
+         Colour: every value consumes the existing --theme-* tokens, with a
+         per-theme literal fallback so the curtain is correct even if the
+         bundle CSS has not landed yet. The light theme keeps small text on
+         --theme-on-background and derives an AA-safe accent ink via
+         color-mix, so contrast is adjusted per theme instead of hardcoded.
+         ──────────────────────────────────────────────────────────────────── */
       #app-loading {
+        /* Base (dark) defaults; the per-theme blocks below override them. */
+        --boot-bg: var(--theme-background, #090b0e);
+        --boot-ink: var(--theme-on-background, #d4d8e0);
+        --boot-accent: var(--theme-primary, #e8a83e);
+        --boot-line: var(--theme-border, rgb(232 168 62 / 0.22));
+        /* AGENTS.md §5 #18: the amber grid needs real alpha to read on #090b0e. */
+        --boot-grid: rgba(232, 168, 62, 0.30);
+        --boot-haze: rgba(232, 168, 62, 0.16);
+
         position: fixed; inset: 0; z-index: 2147483647;
-        display: grid; place-items: center; contain: layout paint style;
-        font-size: 16px; line-height: 1;
-        background: var(--boot-background, #090b0e); color: var(--boot-foreground, #f0f2f5);
-        font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+        box-sizing: border-box;
+        display: grid;
+        grid-template-rows: auto 1fr auto;
+        justify-items: center;
+        align-items: center;
+        gap: 1rem;
+        padding: clamp(1rem, 4vw, 2.5rem);
+        overflow: hidden;
+        contain: layout paint style;
+        background-color: transparent;
+        color: var(--boot-ink);
+        font-family: var(--theme-font-mono, ui-monospace, SFMono-Regular, Menlo, Consolas, monospace);
+        font-size: 14px;
+        line-height: 1.5;
         opacity: 1;
       }
-      html.v-theme--dark #app-loading { --boot-background: #090b0e; --boot-foreground: #d4d8e0; --boot-accent: #e8a83e; }
-      html.v-theme--light #app-loading { --boot-background: #f0f2f5; --boot-foreground: #1a1d24; --boot-accent: #2fb5a0; }
-      #app-loading-content { display: grid; justify-items: center; align-content: center; width: 520px; height: 96px; gap: 14px; contain: layout paint; }
-      #app-loading-logo { color: inherit; white-space: nowrap; font-size: 40px; line-height: 1; font-weight: 700; letter-spacing: 0.14em; }
-      #app-loading-caption { color: var(--boot-accent, #e8a83e); font-size: 10px; line-height: 1; letter-spacing: 0.1em; }
-      #app-loading-dots { display: flex; gap: 6px; height: 6px; align-items: flex-start; }
-      #app-loading-dots span { position: relative; top: 0; left: 0; width: 6px; height: 6px; border-radius: 50%; background: currentColor; opacity: 0.7; animation: app-loading-bounce 700ms ease-in-out infinite; }
-      #app-loading-dots span:nth-child(2) { animation-delay: 100ms; }
-      #app-loading-dots span:nth-child(3) { animation-delay: 200ms; }
-      @keyframes app-loading-bounce { 0%, 60%, 100% { top: 0; } 30% { top: -6px; } }
-      @media (max-width: 768px) {
-        #app-loading-content { width: calc(100vw - 32px); max-width: 520px; }
-        #app-loading-logo { font-size: clamp(24px, 8vw, 32px); letter-spacing: 0.08em; }
+
+      html.v-theme--dark #app-loading {
+        --boot-bg: var(--theme-background, #090b0e);
+        --boot-ink: var(--theme-on-background, #d4d8e0);
+        --boot-accent: var(--theme-primary, #e8a83e);
+        --boot-line: var(--theme-border, rgb(232 168 62 / 0.22));
+        --boot-grid: rgba(232, 168, 62, 0.30);
+        --boot-haze: rgba(232, 168, 62, 0.16);
       }
-      @media (prefers-reduced-motion: reduce) { #app-loading-dots span { animation-duration: 1400ms; } }
+      html.v-theme--light #app-loading {
+        --boot-bg: var(--theme-background, #f0f2f5);
+        --boot-ink: var(--theme-on-background, #1a1d24);
+        --boot-accent: var(--theme-primary, #2fb5a0);
+        --boot-line: var(--theme-border, rgb(0 0 0 / 0.12));
+        --boot-grid: rgba(47, 181, 160, 0.22);
+        --boot-haze: rgba(47, 181, 160, 0.14);
+        /* Teal #2fb5a0 is only ~2.2:1 on #f0f2f5; mix it toward the ink so the
+           small accent labels stay legible. Falls back to --boot-accent when
+           color-mix() is unavailable (var fallback at the use site). */
+        --boot-accent-ink: color-mix(in srgb, var(--theme-primary, #2fb5a0) 50%, var(--theme-on-background, #1a1d24));
+      }
+
+      /* The opaque curtain itself lives on a pseudo-element: during the docking
+         hand-off everything except the avatar has to dissolve, and a parent
+         opacity fade would take the flying avatar with it. z-index: -1 keeps it
+         under the curtain content but inside #app-loading's own stacking
+         context (position: fixed + z-index creates one). */
+      #app-loading::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        z-index: -1;
+        background-color: var(--boot-bg);
+        background-image:
+          radial-gradient(58% 42% at 50% 47%, var(--boot-haze), transparent 72%),
+          repeating-linear-gradient(to right, var(--boot-grid) 0 1px, transparent 1px 28px),
+          repeating-linear-gradient(to bottom, var(--boot-grid) 0 1px, transparent 1px 28px);
+        background-repeat: no-repeat, repeat, repeat;
+        background-size: auto, 28px 28px, 28px 28px;
+      }
+
+      /* Camera-frame corners: the site's own "terminal panel" motif. */
+      .boot-frame { position: absolute; inset: clamp(0.6rem, 2vw, 1.25rem); pointer-events: none; }
+      .boot-frame span {
+        position: absolute;
+        width: clamp(18px, 3vw, 28px);
+        height: clamp(18px, 3vw, 28px);
+        border: 2px solid var(--boot-accent);
+        opacity: 0.5;
+      }
+      .boot-frame span:nth-child(1) { top: 0; left: 0; border-right: 0; border-bottom: 0; }
+      .boot-frame span:nth-child(2) { top: 0; right: 0; border-left: 0; border-bottom: 0; }
+      .boot-frame span:nth-child(3) { bottom: 0; left: 0; border-right: 0; border-top: 0; }
+      .boot-frame span:nth-child(4) { bottom: 0; right: 0; border-left: 0; border-top: 0; }
+
+      .boot-hud {
+        width: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+        font-size: 0.66rem;
+        letter-spacing: 0.22em;
+        opacity: 0.7;
+      }
+      .boot-hud__link {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.45rem;
+        color: var(--boot-accent-ink, var(--boot-accent));
+      }
+      .boot-hud__dot {
+        width: 6px; height: 6px;
+        border-radius: 50%;
+        background: currentColor;
+        box-shadow: 0 0 8px currentColor;
+        animation: boot-blink 1.1s steps(2, end) infinite;
+      }
+
+      .boot-stage {
+        display: grid;
+        justify-items: center;
+        align-content: center;
+        gap: clamp(1.1rem, 3.2vh, 1.9rem);
+        width: min(100%, 34rem);
+        animation: boot-stage-in 700ms cubic-bezier(0.16, 1, 0.3, 1) both;
+      }
+
+      /* Signal lock reticle around the avatar core. */
+      .boot-core {
+        position: relative;
+        display: grid;
+        place-items: center;
+        width: clamp(148px, 32vw, 204px);
+        aspect-ratio: 1;
+      }
+      .boot-core > * { grid-area: 1 / 1; }
+      .boot-core__avatar {
+        position: relative;
+        display: grid;
+        place-items: center;
+        width: 62%;
+        aspect-ratio: 1;
+        border-radius: 50%;
+        overflow: hidden;
+        background-color: var(--boot-bg);
+        box-shadow: 0 0 0 1px var(--boot-line), 0 0 28px var(--boot-haze);
+      }
+      .boot-core__avatar > * { grid-area: 1 / 1; }
+      .boot-core__avatar img {
+        width: 100%; height: 100%;
+        object-fit: cover;
+        border-radius: 50%;
+        display: block;
+      }
+      /* Visible only when the avatar asset is missing (empty alt paints nothing),
+         so a failed image degrades to a tokenised monogram - never a broken icon. */
+      .boot-core__monogram {
+        display: grid;
+        place-items: center;
+        width: 100%; height: 100%;
+        font-size: clamp(0.95rem, 2.4vw, 1.2rem);
+        font-weight: 700;
+        letter-spacing: 0.22em;
+        text-indent: 0.22em;
+        color: var(--boot-accent-ink, var(--boot-accent));
+        background-color: var(--boot-bg);
+      }
+      .boot-core__ring {
+        position: absolute; inset: 0;
+        border: 1px dashed var(--boot-line);
+        border-top-color: var(--boot-accent);
+        border-radius: 50%;
+        animation: boot-ring 3.6s linear infinite;
+      }
+      .boot-core__ticks {
+        position: absolute; inset: -4%;
+        border-radius: 50%;
+        background: repeating-conic-gradient(
+          from 0deg,
+          var(--boot-accent) 0deg 1.2deg,
+          transparent 1.2deg 15deg
+        );
+        /* closest-side: 默认 farthest-corner 会按对角距离算百分比，刻度环会
+           跑到四个角上（AGENTS.md §5 #33）。刻度环落在头像（半径 63px）与
+           外环（半径 ≈102px）之间。 */
+        -webkit-mask: radial-gradient(circle closest-side, transparent 70%, #000 71%, #000 84%, transparent 85%);
+        mask: radial-gradient(circle closest-side, transparent 70%, #000 71%, #000 84%, transparent 85%);
+        opacity: 0.5;
+        animation: boot-ticks 9s linear infinite;
+      }
+      .boot-core__sweep {
+        position: absolute; inset: -6%;
+        border-radius: 50%;
+        background: conic-gradient(
+          from 0deg,
+          transparent 0deg 292deg,
+          var(--boot-haze) 330deg,
+          var(--boot-accent) 356deg,
+          transparent 360deg
+        );
+        -webkit-mask: radial-gradient(circle closest-side, transparent calc(100% - 36px), #000 calc(100% - 35px), #000 calc(100% - 12px), transparent calc(100% - 11px));
+        mask: radial-gradient(circle closest-side, transparent calc(100% - 36px), #000 calc(100% - 35px), #000 calc(100% - 12px), transparent calc(100% - 11px));
+        opacity: 0.8;
+        animation: boot-sweep 2.6s linear infinite;
+      }
+      .boot-core__glow {
+        position: absolute; inset: 8%;
+        border-radius: 50%;
+        box-shadow: 0 0 42px 6px var(--boot-haze), inset 0 0 22px var(--boot-haze);
+        animation: boot-pulse 2.4s ease-in-out infinite;
+      }
+
+      .boot-readout {
+        display: grid;
+        justify-items: center;
+        gap: 0.55rem;
+        width: min(100%, 22rem);
+        text-align: center;
+      }
+      .boot-readout__wordmark {
+        margin: 0;
+        font-size: clamp(1.05rem, 3.4vw, 1.45rem);
+        font-weight: 700;
+        letter-spacing: 0.3em;
+        text-indent: 0.3em;
+        color: var(--boot-ink);
+        text-shadow: 0 0 20px var(--boot-haze);
+      }
+      .boot-readout__stages {
+        margin: 0;
+        font-size: 0.7rem;
+        letter-spacing: 0.16em;
+        color: var(--boot-accent-ink, var(--boot-accent));
+      }
+      .boot-progress {
+        position: relative;
+        width: min(100%, 19rem);
+        height: 3px;
+        margin-top: 0.35rem;
+        border-radius: 999px;
+        background-color: var(--boot-line);
+        overflow: hidden;
+      }
+      .boot-progress__fill {
+        position: absolute;
+        top: 0; bottom: 0; left: 0;
+        width: 0;
+        border-radius: 999px;
+        background: linear-gradient(90deg, transparent, var(--boot-accent));
+        box-shadow: 0 0 12px var(--boot-accent);
+        /* Duration mirrors BOOT_SPLASH_MIN_VISIBLE_MS in
+           src/composables/useBootSplash.ts. */
+        animation: boot-progress 3800ms cubic-bezier(0.35, 0.08, 0.2, 1) forwards;
+      }
+      .boot-log {
+        list-style: none;
+        margin: 0.35rem 0 0;
+        padding: 0;
+        display: grid;
+        gap: 0.3rem;
+        width: min(100%, 19rem);
+        font-size: 0.68rem;
+        letter-spacing: 0.1em;
+        text-align: left;
+      }
+      .boot-log li {
+        display: flex;
+        gap: 0.5rem;
+        opacity: 0.72;
+        /* `both` is required, not `forwards`: with plain forwards the delay
+           phase applies no keyframe, so every line would sit at its 0.72 base
+           opacity from the first frame and then blink down to 0 when its turn
+           came. `both` keeps each line at the `from` frame (opacity 0) until
+           its animation-delay elapses. */
+        animation: boot-log-in 420ms ease both;
+      }
+      .boot-log li:nth-child(1) { animation-delay: 500ms; }
+      .boot-log li:nth-child(2) { animation-delay: 1250ms; }
+      .boot-log li:nth-child(3) { animation-delay: 2000ms; }
+      .boot-log li:nth-child(4) { animation-delay: 2700ms; }
+      .boot-log li:nth-child(5) { animation-delay: 3300ms; }
+      .boot-log li > span { color: var(--boot-accent-ink, var(--boot-accent)); }
+
+      .boot-foot {
+        width: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+        font-size: 0.62rem;
+        letter-spacing: 0.2em;
+        opacity: 0.5;
+      }
+
+      /* Exit without a docking target (e.g. the first entry landed on /posts):
+         the whole curtain fades, opacity only. */
+      #app-loading.boot-splash--leaving:not(.boot-splash--docking) {
+        opacity: 0;
+        transition: opacity 600ms ease; /* mirrors BOOT_SPLASH_FADE_MS */
+      }
+      #app-loading.boot-splash--leaving { pointer-events: none; }
+
+      /* Exit with docking: the veil and the ornaments dissolve, and the avatar
+         itself flies to the homepage portrait instead of fading. */
+      #app-loading.boot-splash--leaving::before {
+        opacity: 0;
+        transition: opacity 600ms ease;
+      }
+      #app-loading.boot-splash--docking .boot-frame,
+      #app-loading.boot-splash--docking .boot-hud,
+      #app-loading.boot-splash--docking .boot-readout,
+      #app-loading.boot-splash--docking .boot-foot,
+      #app-loading.boot-splash--docking .boot-core__glow,
+      #app-loading.boot-splash--docking .boot-core__ticks,
+      #app-loading.boot-splash--docking .boot-core__sweep,
+      #app-loading.boot-splash--docking .boot-core__ring {
+        opacity: 0;
+        transition: opacity 460ms ease;
+      }
+      /* The flight: slide across first, then open up into the portrait frame.
+         --dock-x/-y/-scale/-radius/-duration are written by useBootSplash.ts
+         from the live geometry of [data-boot-dock]. */
+      #app-loading.boot-splash--docking .boot-core__avatar {
+        z-index: 3;
+        animation: boot-dock var(--dock-duration, 1150ms) cubic-bezier(0.24, 0.72, 0.14, 1) forwards;
+      }
+      @keyframes boot-dock {
+        0% {
+          transform: none;
+          border-radius: 50%;
+          box-shadow: 0 0 0 1px var(--boot-line), 0 0 28px var(--boot-haze);
+        }
+        58% {
+          transform: translate(var(--dock-x, 0px), var(--dock-y, 0px))
+            scale(calc(var(--dock-scale, 1) * 0.76));
+          border-radius: 32%;
+          box-shadow: 0 0 0 0 transparent;
+        }
+        100% {
+          transform: translate(var(--dock-x, 0px), var(--dock-y, 0px))
+            scale(var(--dock-scale, 1));
+          border-radius: var(--dock-radius, 0px);
+          box-shadow: none;
+        }
+      }
+      html.boot-splash-off #app-loading { display: none !important; }
+
+      @keyframes boot-stage-in {
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: none; }
+      }
+      @keyframes boot-ring { to { transform: rotate(360deg); } }
+      @keyframes boot-ticks { to { transform: rotate(-360deg); } }
+      @keyframes boot-sweep { to { transform: rotate(360deg); } }
+      @keyframes boot-pulse {
+        0%, 100% { opacity: 0.55; }
+        50% { opacity: 1; }
+      }
+      @keyframes boot-blink {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.25; }
+      }
+      @keyframes boot-progress {
+        from { width: 0; }
+        to { width: 100%; }
+      }
+      @keyframes boot-log-in {
+        from { opacity: 0; transform: translateY(4px); }
+        to { opacity: 0.72; transform: none; }
+      }
+
+      @media (max-width: 480px) {
+        #app-loading { font-size: 13px; padding: 1.1rem; }
+        .boot-hud { font-size: 0.58rem; letter-spacing: 0.16em; }
+        .boot-hud__tag { display: none; }
+        .boot-foot { font-size: 0.56rem; letter-spacing: 0.14em; }
+        .boot-log { font-size: 0.62rem; }
+      }
+
+      /* Deliberate deviation, decided by the owner on 2026-09-15: the startup
+         curtain does NOT degrade under prefers-reduced-motion. The first entry
+         gets the complete boot sequence on every machine (Windows "animation
+         effects" off makes every Chromium report reduce, which used to hide the
+         feature from its own author). Everything else on the site — the unit-4
+         home entrance, the route-loading mark — still honours reduce in its own
+         component CSS. To restore a moving-free curtain, re-add a
+         `@media (prefers-reduced-motion: reduce)` block here that pins
+         `animation/transition/transform` and stretches the progress fill. */
     </style>
+    <noscript>
+      <!-- SSG ships the full page in the HTML, so with JS off the curtain is
+           pointless and must not sit there animating forever. -->
+      <style>#app-loading { display: none !important; } html.booting, html.booting body { overflow: auto !important; }</style>
+    </noscript>
   </head>
   <body>
     <div id="app"></div>
     <div id="app-loading" role="status" aria-live="polite" aria-label="AMU LIVE STYLE 正在启动">
-      <div id="app-loading-content">
-        <div id="app-loading-caption">AMU SYSTEM / BOOT</div>
-        <div id="app-loading-logo">AMU LIVE STYLE</div>
-        <div id="app-loading-dots" aria-hidden="true"><span></span><span></span><span></span></div>
+      <div class="boot-frame" aria-hidden="true"><span></span><span></span><span></span><span></span></div>
+      <div class="boot-hud" aria-hidden="true">
+        <span class="boot-hud__tag">AMU LIVE STYLE / BOOT</span>
+        <span class="boot-hud__link"><i class="boot-hud__dot"></i>SIGNAL // LINK</span>
+      </div>
+      <div class="boot-stage" aria-hidden="true">
+        <div class="boot-core">
+          <span class="boot-core__glow"></span>
+          <span class="boot-core__ticks"></span>
+          <span class="boot-core__sweep"></span>
+          <span class="boot-core__ring"></span>
+          <span class="boot-core__avatar">
+            <span class="boot-core__monogram">AMU</span>
+            <img src="/img/amu-portrait.webp" alt="" width="1024" height="1024" decoding="async" fetchpriority="high">
+          </span>
+        </div>
+        <div class="boot-readout">
+          <p class="boot-readout__wordmark">AMU LIVE STYLE</p>
+          <p class="boot-readout__stages">系统启动 / 终端初始化 / 信号接入</p>
+          <div class="boot-progress"><span class="boot-progress__fill"></span></div>
+          <ul class="boot-log">
+            <li><span>&rsaquo;</span>内容索引挂载 · INDEX MOUNT</li>
+            <li><span>&rsaquo;</span>主题 token 注入 · THEME TOKENS</li>
+            <li><span>&rsaquo;</span>路由表校验 · ROUTE TABLE</li>
+            <li><span>&rsaquo;</span>信号接入 · SIGNAL LINK</li>
+            <li><span>&rsaquo;</span>启动完成 · BOOT COMPLETE</li>
+          </ul>
+        </div>
+      </div>
+      <div class="boot-foot" aria-hidden="true">
+        <span>BOOT SEQUENCE</span>
+        <span>阿木 · 长期档案</span>
       </div>
     </div>
     <script type="module" src="/src/entry-client.ts"></script>

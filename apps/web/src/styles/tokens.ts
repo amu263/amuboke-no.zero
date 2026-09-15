@@ -149,3 +149,8 @@ export const fontFamilyMono =
 // 客户端持久化 key（AGENTS.md §9.5: 路径/阈值不硬编码到组件里，但 key
 // 本身就是「持久化契约」，抽成常量方便以后换 namespace）。
 export const THEME_STORAGE_KEY = 'amuboke-no.zero:theme'
+
+// 单元 7：启动 Splash 的「本会话已播放」标记（sessionStorage）。
+// index.html 的引导脚本必须在首绘前读到它，无法 import，因此在那边
+// 以字面量重复了一次（BOOT_SPLASH_STORAGE_KEY）；改这里必须同步改那边。
+export const BOOT_SPLASH_STORAGE_KEY = 'amuboke-no.zero:boot-splash'
