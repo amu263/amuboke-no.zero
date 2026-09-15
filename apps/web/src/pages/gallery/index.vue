@@ -1,5 +1,6 @@
 <script setup lang="ts">
 // pages/gallery/index.vue — 图集列表页（极客风 Unit 5）
+import { reactive } from 'vue'
 import { GALLERIES } from '@/content/build-time-index'
 import {
   GlowButton,
@@ -10,6 +11,10 @@ import {
 } from '@/components/ui'
 
 const totalPhotos = GALLERIES.reduce((acc, g) => acc + (g.photos?.length ?? 0), 0)
+
+// 加载失败的图位登记表：单元 3 决策 #6 承诺「任何加载失败都不露破图」，
+// 所以既要在 src 缺失时占位，也要在 src 有值却 404 时（onerror）切到同一个占位块。
+const failedPhotos = reactive(new Set<string>())
 </script>
 
 <template>
@@ -37,10 +42,11 @@ const totalPhotos = GALLERIES.reduce((acc, g) => acc + (g.photos?.length ?? 0), 
                 :class="{ 'gallery-item__photo--more': i === 3 && (gallery.photos?.length ?? 0) > 4 }"
               >
                 <img
-                  v-if="photo.src"
+                  v-if="photo.src && !failedPhotos.has(photo.src)"
                   :src="photo.src"
                   :alt="photo.alt ?? gallery.title"
                   loading="lazy"
+                  @error="failedPhotos.add(photo.src)"
                 />
                 <div v-else class="gallery-item__photo-placeholder">
                   <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.8">

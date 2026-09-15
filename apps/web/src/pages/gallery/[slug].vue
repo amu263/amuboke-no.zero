@@ -1,8 +1,12 @@
 <script setup lang="ts">
 // 图集详情页 - 单行水平滚动图片展示，左右箭头导航
-import { computed, ref, onMounted, nextTick } from 'vue'
+import { computed, reactive, ref, onMounted, nextTick } from 'vue'
 import { useRoute } from 'vue-router'
 import { GALLERY_BY_SLUG, type GalleryPhoto } from '@/content/build-time-index'
+
+// 与图集索引页同一条契约（单元 3 决策 #6）：src 缺失或加载失败都不露破图。
+// 详情页的图条与 lightbox 是两处独立图位，各自登记。
+const failedPhotos = reactive(new Set<string>())
 
 const route = useRoute()
 const slug = computed(() => String(route.params.slug ?? ''))
@@ -166,13 +170,22 @@ function getPhotoWidth(photo: PhotoWithRatio): number {
               @click="openLightbox(photo, i)"
             >
               <img
+                v-if="!failedPhotos.has(photo.src)"
                 :src="photo.src"
                 :alt="photo.alt"
                 class="gallery-cell__img"
                 loading="lazy"
                 decoding="async"
                 @load="updatePhotoRatio(photo, $event)"
+                @error="failedPhotos.add(photo.src)"
               />
+              <div v-else class="gallery-cell__fallback" role="img" :aria-label="photo.alt">
+                <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8">
+                  <rect x="3" y="3" width="18" height="18" rx="2" />
+                  <circle cx="8.5" cy="8.5" r="1.5" />
+                  <path d="m21 15-5-5L5 21" />
+                </svg>
+              </div>
               <div class="gallery-cell__overlay">
                 <svg class="gallery-cell__icon" viewBox="0 0 24 24" aria-hidden="true">
                   <path d="M15 3h6v6M14 10l7-7M21 14v6a1 1 0 01-1 1H4a1 1 0 01-1-1V4a1 1 0 011-1h13l5 5z" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
@@ -242,7 +255,20 @@ function getPhotoWidth(photo: PhotoWithRatio): number {
         </button>
 
         <div class="lightbox__content">
-          <img :src="lightboxPhoto.src" :alt="lightboxPhoto.alt" class="lightbox__img" />
+          <img
+            v-if="!failedPhotos.has(lightboxPhoto.src)"
+            :src="lightboxPhoto.src"
+            :alt="lightboxPhoto.alt"
+            class="lightbox__img"
+            @error="failedPhotos.add(lightboxPhoto.src)"
+          />
+          <div v-else class="lightbox__fallback" role="img" :aria-label="lightboxPhoto.alt">
+            <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6">
+              <rect x="3" y="3" width="18" height="18" rx="2" />
+              <circle cx="8.5" cy="8.5" r="1.5" />
+              <path d="m21 15-5-5L5 21" />
+            </svg>
+          </div>
           <p v-if="lightboxPhoto.caption" class="lightbox__caption">{{ lightboxPhoto.caption }}</p>
           <p v-if="lightboxPhoto.exif" class="lightbox__exif">
             <span v-if="lightboxPhoto.exif.camera">{{ lightboxPhoto.exif.camera }}</span>
@@ -357,6 +383,17 @@ function getPhotoWidth(photo: PhotoWithRatio): number {
 }
 .gallery-cell:hover .gallery-cell__img {
   transform: scale(1.03);
+}
+
+/* 加载失败时的占位块（与图集索引页同一个视觉语言：token 化底色 + 内联 SVG，不露破图） */
+.gallery-cell__fallback {
+  width: 100%;
+  height: 100%;
+  display: grid;
+  place-items: center;
+  color: var(--theme-secondary);
+  background: var(--theme-scrim);
+  opacity: 0.55;
 }
 
 .gallery-cell__overlay {
@@ -575,6 +612,21 @@ function getPhotoWidth(photo: PhotoWithRatio): number {
   max-height: 75vh;
   object-fit: contain;
   border-radius: var(--theme-radius-sm);
+}
+.lightbox__fallback {
+  width: min(70vw, 420px);
+  height: min(52vh, 320px);
+  display: grid;
+  place-items: center;
+  color: var(--theme-secondary);
+  background: var(--theme-scrim);
+  border: 1px dashed var(--theme-border);
+  border-radius: var(--theme-radius-sm);
+  opacity: 0.6;
+}
+.lightbox__fallback svg {
+  width: 48px;
+  height: 48px;
 }
 .lightbox__caption {
   margin: 0;
