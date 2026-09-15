@@ -97,7 +97,7 @@ Hero 身份栏内指向创作者 Bilibili 主页的出站锚。URL 常量为 `BI
 ## I
 
 **Icon (图标)**
-本项目不使用图标字体或第三方图标包。Hero 的 Bilibili CTA、AppBar 的主题切换、GalleryGrid 的占位 icon、热力图 tooltip 等所有图标都是内联 SVG。
+本项目不使用图标字体或第三方图标包。Hero 的 Bilibili CTA、AppBar 的主题切换、图集卡片的照片占位 icon(由 `TerminalCard` + 页面内联结构承载,原 `GalleryGrid` 已于 2026-09-15 删除)、热力图 tooltip 等所有图标都是内联 SVG。
 
 **In scope / out of scope (范围内 / 范围外)**
 ADR / HOMEPAGE-ARCHITECTURE 中的「本 ADR 不做什么」「本 spec 不实现什么」段落,用于防止 scope creep。
@@ -145,7 +145,7 @@ ADR / HOMEPAGE-ARCHITECTURE 中的「本 ADR 不做什么」「本 spec 不实�
 文档 / 实现中尚未到位、由所有者提供的资产(肖像图)。Bilibili URL 已由所有者提供,不是待定资产。占位阶段显示中性占位块,绝不臆造具体内容。
 
 **Portrait hero (肖像 hero)**
-Hero 区域由创作者肖像驱动的部分。资产路径占位:`apps/web/public/images/home/portrait-hero.<ext>`。
+Hero 区域由创作者肖像驱动的部分。资产路径占位:`apps/web/public/images/home/portrait-hero.<ext>`。(2026-09-15 实际落地为 `apps/web/public/img/amu-portrait.webp`,与启动帘幕头像共用。)
 
 ## Q
 

@@ -52,7 +52,7 @@
 ### 2.4 提供的肖像 hero 处理
 
 - Hero 由创作者提供的肖像 / 专辑封面图驱动。该资产在实现时由所有者提供；本 ADR 不臆造文件名或缩略图。
-- 资产路径占位：`apps/web/public/images/home/portrait-hero.<ext>`，扩展名与文件名在资产到位时由实现会话写入。
+- 资产路径占位：`apps/web/public/images/home/portrait-hero.<ext>`，扩展名与文件名在资产到位时由实现会话写入。（**2026-09-15 实际落地**：该占位路径未采用，肖像落在 `apps/web/public/img/amu-portrait.webp`，且与启动帘幕中央头像共用同一张。）
 - 在资产未到位期间，hero 渲染中性占位块（与主题 `background` 同色 + 居中的小标签「Portrait, pending asset」），不抛错、不显示破图 icon。
 - 图片必须有 `alt`；占位阶段的 alt 为「Creator portrait, pending asset」。
 
@@ -198,6 +198,15 @@
 - 长代码行走横向滚动（`overflow-x: auto`）；滚动必须在聚焦时可见，供键盘用户使用。
 - 外层包裹 `role="region"` + `aria-label="Code"`，便于屏幕阅读器发现。
 
+### 2.24 实现载体修订（2026-09-15）
+
+- 本 ADR 约束的是**视觉意图与行为契约**，不约束承载它们的组件文件。单元 5 落地 `apps/web/src/components/ui` 基件库之后，单元 3 时代的功能卡片组件已被取代：
+  - `GalleryGrid` / `ProjectCard` / `PostCard` / `FriendCard` / `ListenCover` → 各索引页统一改用 `TerminalCard` + `SectionHeader` / `GlowButton` / `MonoChip` / `StatusBadge` / `AvatarWithFallback` / `DividerDecorate`（`@/components/ui` 桶导出）。
+  - `HomeHero` / `HomeChannelGrid` / `HomeRecentUpdates` → 主页 `/` 由 `pages/index.vue` 的 `home-page__*` 结构直接编排 + 同一批 ui 基件。
+- 上列 8 个组件与旧肖像资产 `apps/web/public/img/portrait-hero.png`（1.88MB）已于 2026-09-15 作为死代码删除；肖像现为 `/img/amu-portrait.webp`（1024² WebP，199KB，由 `素材/阿木头像新.png` 派生，**帘幕头像与首页肖像共用**）。详见 `docs/ARCHITECTURE.md` §3 单元 7 决策。
+- **§2.1–§2.23 的所有视觉与行为约束不变**；下文（以及 `docs/HOMEPAGE-ARCHITECTURE.md`、`docs/GLOSSARY.md`）凡出现上述旧组件名，一律按「由 `@/components/ui` 基件或页面内联结构承载」理解。
+- 曾经的**行为漂移已修复（同日）**：单元 5 重写 `/gallery` 时，预览 fallback 的触发条件从「`<img>` `onerror`」退化成「缺 `src`」。2026-09-15 已在**索引页 + 详情页图条 + lightbox** 三处补齐 `@error` 守卫，「任何加载失败都不出破图」的承诺重新成立（见 `docs/ARCHITECTURE.md` §2 最后一条）。
+
 ## 3. 影响
 
 ### 3.1 正面影响
@@ -243,3 +252,4 @@
 | 日期 | 变更 | 原因 |
 | --- | --- | --- |
 | 2026-08-22 | 创建本 ADR | 记录「AMU LIVE STYLE」主页设计语言，作为单元 4 的方向（不实现代码） |
+| 2026-09-15 | 新增 §2.24「实现载体修订」：单元 3 时代的 8 个功能组件（`GalleryGrid` / `ProjectCard` / `PostCard` / `FriendCard` / `ListenCover` / `HomeHero` / `HomeChannelGrid` / `HomeRecentUpdates`）已被 `@/components/ui` 基件取代并作为死代码删除；肖像资产改为 `/img/amu-portrait.webp` 且与启动帘幕共用；记录 `/gallery` 预览 fallback 触发条件从 `onerror` 变为「缺 `src`」这一行为漂移 | 单元 5 用 ui 基件重写索引页与主页后，规格文档中的旧组件名成为悬空引用；按 §4.1 顺序先修订 ADR |

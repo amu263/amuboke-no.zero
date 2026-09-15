@@ -6,7 +6,7 @@
 
 ## 0. 文档约定
 
-- 「组件 X」指将要实现的 Vue SFC,落在 `apps/web/src/components/<domain>/`。
+- 「组件 X」指将要实现的 Vue SFC,落在 `apps/web/src/components/<domain>/`。**2026-09-15 载体修订**:单元 5 实际落地的承载者是 `apps/web/src/components/ui/` 的基件(`TerminalCard` / `SectionHeader` / `GlowButton` / `MonoChip` / `StatusBadge` / `AvatarWithFallback` / `DividerDecorate`)与页面内联结构;下文出现的旧组件名(`GalleryGrid` / `FriendCard` / `ProjectCard` / `PostCard` / `HomeHero` / `HomeChannelGrid` / `HomeRecentUpdates` / `ListenCover`)均已作为死代码删除,读到时按「由 ui 基件承载」理解。详见 `docs/ADR-amu-live-style-homepage.md` §2.24。
 - 「区块」指主页的一个顶层视觉区域。
 - 「槽位」指组件内可注入内容的命名区域。
 - 所有颜色 / 间距 / 字号 / 圆角 / 阴影 / 字号阶梯消费 `apps/web/src/styles/tokens.ts` 与 `tokens.scss` 既有的 `--theme-*` 变量。不在本规格中重新声明数值。
@@ -24,7 +24,7 @@
 6. 友链条(Friends strip,沿用单元 3 现有组件)
 7. 单行页脚(Monospace single-line footer)
 
-区块 6 与 7 在本文中不重复规格,沿用既有 `FriendCard` 与基础 footer;如需调整样式,在后续会话中按 ADR 一致性原则补记。
+区块 6 与 7 在本文中不重复规格,沿用既有友链卡片视觉与基础 footer;如需调整样式,在后续会话中按 ADR 一致性原则补记。(`FriendCard` 组件已于 2026-09-15 删除;现行载体为 `TerminalCard` + `AvatarWithFallback`,见 §0 载体修订。)
 
 ## 2. 固定磨砂导航
 
@@ -67,7 +67,7 @@
 ### 3.2 肖像栏(Portrait column)
 
 - 单图:创作者提供的肖像 / 专辑封面。
-- 资产路径占位:`apps/web/public/images/home/portrait-hero.<ext>`。
+- 资产路径占位:`apps/web/public/images/home/portrait-hero.<ext>`。(2026-09-15 实际落地为 `apps/web/public/img/amu-portrait.webp`,与启动帘幕头像共用;见 §17。)
   - `<ext>` 与最终文件名由所有者提供资产后写入。
   - 占位阶段,实现层渲染「`var(--theme-background)` 同色 + 居中的小标签 Portrait, pending asset」的中性占位块。
 - 图片必须 `alt`;占位阶段固定 alt:`Creator portrait, pending asset`。
@@ -213,7 +213,7 @@
 
 ## 8. `/gallery` 白色圆角凸起框 + 全屏预览
 
-### 8.1 卡片视觉(覆盖单元 3 既有 `GalleryGrid` 的视觉)
+### 8.1 卡片视觉(覆盖单元 3 既有 `GalleryGrid` 的视觉;该组件已于 2026-09-15 删除,现行载体为 `TerminalCard` + 页面内联 `.gallery-item__*` 结构)
 
 - 表面:`var(--theme-surface)`。亮主题下为白,暗主题下为近黑,但视觉一致性靠 token,不强写 hex。
 - 圆角:`var(--theme-radius-lg)`。
@@ -233,7 +233,7 @@
 
 ### 8.3 卡片非交互例外
 
-- `GalleryGrid` 的卡片 figure 本身**不**挂 `<a>`(沿用 ARCHITECTURE.md §3 单元 3 决策 #5:索引卡片非交互)。
+- 图集卡片的 figure 本身**不**挂 `<a>`(沿用 ARCHITECTURE.md §3 单元 3 决策 #5:索引卡片非交互;原 `GalleryGrid` 组件已删除,契约由 `TerminalCard` + 页面内联结构继承)。
 - 全屏预览通过卡片内的独立 `<button class="gallery-grid__open">` 触发,不通过卡片本身触发。
 
 ## 9. `/listen` schema
@@ -359,7 +359,7 @@
 | 项 | 阻塞什么 | 解决路径 |
 | --- | --- | --- |
 | `BILIBILI_PROFILE_URL` 代码位置 | Hero 的 Bilibili CTA 的唯一 URL 来源 | 实现会话写入 `apps/web/src/data/social.ts`,值为 `https://space.bilibili.com/233594416` |
-| 肖像资产文件 | Hero 肖像栏真图渲染 | 所有者提供后放入 `apps/web/public/images/home/portrait-hero.<ext>`;占位壳可先落地 |
+| 肖像资产文件 | Hero 肖像栏真图渲染 | **已落地**：`apps/web/public/img/amu-portrait.webp`(1024² WebP,199KB,由 `素材/阿木头像新.png` 派生;与启动帘幕中央头像**共用同一张**);原占位路径 `public/images/home/portrait-hero.<ext>` 未采用 |
 | 引言真稿(中文主 + 英文次) | Hero 引言区显示真稿 | 已确认文案,实现会话直接落地 |
 | `/listen` 页面与 schema | 第五个内容类型的实现 | 单元 4 按本文 §9 实现 |
 | 现有测试文章 | 正式内容上线前替换 | 所有者在设计验收后删除并重写 |
