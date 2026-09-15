@@ -101,17 +101,25 @@ export const routes: (RouteRecordRaw & RouteMeta)[] = [
       },
     },
   },
-  {
-    path: '/demo',
-    name: 'demo',
-    component: () => import('@/pages/demo.vue'),
-    meta: {
-      pageMeta: {
-        title: 'UI 组件实验室',
-        description: '极客风 UI 组件展示。',
-      },
-    },
-  },
+  // 单元 5 的 UI 组件实验室：**只在开发环境注册**。
+  // import.meta.env.DEV 会被 Vite 静态替换为 false，因此生产构建里这一整块
+  // （连同 demo.vue 的 dynamic import）会被摇掉：dist 不再产出 /demo/index.html，
+  // vite-ssg 的 includedRoutes 也拿不到这个路径，线上访问落到下面的 catch-all 回首页。
+  ...(import.meta.env.DEV
+    ? [
+        {
+          path: '/demo',
+          name: 'demo',
+          component: () => import('@/pages/demo.vue'),
+          meta: {
+            pageMeta: {
+              title: 'UI 组件实验室',
+              description: '极客风 UI 组件展示。',
+            },
+          },
+        } satisfies RouteRecordRaw,
+      ]
+    : []),
   {
     path: '/:pathMatch(.*)*',
     redirect: { name: 'home' },

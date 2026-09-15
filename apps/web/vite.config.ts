@@ -87,10 +87,6 @@ const PAGE_SEO: Record<string, { title: string; description: string }> = {
     title: '友链 | AMU LIVE STYLE',
     description: '同频朋友的链接，志同道合的站点推荐。',
   },
-  '/demo': {
-    title: 'UI 组件实验室 | AMU LIVE STYLE',
-    description: '极客风 UI 组件展示页面，测试和演示用。',
-  },
 }
 
 const DEFAULT_SEO = {
