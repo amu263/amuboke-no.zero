@@ -3,12 +3,11 @@
 packages:
   - '.'
 
+# 只列当前仍会触达的包：esbuild 需要 postinstall 下载平台二进制，
+# @parcel/watcher 走可选依赖、不需要构建脚本。
+# 曾经的 sharp 图像插件（cwebp-bin / gifsicle / jpegtran-bin / mozjpeg /
+# optipng-bin / pngquant-bin）已随 2548295 移除，对应的占位值条目不合法，
+# 会让 pnpm install 直接失败，已一并删除。
 allowBuilds:
   '@parcel/watcher': false
-  cwebp-bin: set this to true or false
   esbuild: true
-  gifsicle: set this to true or false
-  jpegtran-bin: set this to true or false
-  mozjpeg: set this to true or false
-  optipng-bin: set this to true or false
-  pngquant-bin: set this to true or false
