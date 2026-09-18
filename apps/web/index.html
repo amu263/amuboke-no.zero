@@ -235,43 +235,39 @@
         color: var(--boot-accent-ink, var(--boot-accent));
         background-color: var(--boot-bg);
       }
+      /* 静态虚线环：只当"锁定环"的静默底子，不再自转。
+         均匀重复的环转起来没有信息量，运动全部交给下面那条方格彗星。 */
       .boot-core__ring {
         position: absolute; inset: 0;
         border: 1px dashed var(--boot-line);
         border-top-color: var(--boot-accent);
         border-radius: 50%;
-        animation: boot-ring 3.6s linear infinite;
       }
-      .boot-core__ticks {
-        position: absolute; inset: -4%;
+      /* ── 方格式彗星（与首页头像外那一模一样的做法）────────────────────
+         十节小方块沿圆轨道前进：offset-rotate: 0deg 让方块始终与页面网格对齐
+         （普通 rotate 会把方块转成菱形，"方格"就没了）；steps(48) 让整条链
+         **逐格跳**，每格 7.5°；第 N 节用正值延时晚一个步长出发，所以亮头在前、
+         淡尾在后。参数与首页刻意保持一致：10 节 / 48 步 / 6.4s。 */
+      .boot-core__orbit {
+        position: absolute; inset: -8%;
         border-radius: 50%;
-        background: repeating-conic-gradient(
-          from 0deg,
-          var(--boot-accent) 0deg 1.2deg,
-          transparent 1.2deg 15deg
-        );
-        /* closest-side: 默认 farthest-corner 会按对角距离算百分比，刻度环会
-           跑到四个角上（AGENTS.md §5 #33）。刻度环落在头像（半径 63px）与
-           外环（半径 ≈102px）之间。 */
-        -webkit-mask: radial-gradient(circle closest-side, transparent 70%, #000 71%, #000 84%, transparent 85%);
-        mask: radial-gradient(circle closest-side, transparent 70%, #000 71%, #000 84%, transparent 85%);
-        opacity: 0.5;
-        animation: boot-ticks 9s linear infinite;
+        pointer-events: none;
       }
-      .boot-core__sweep {
-        position: absolute; inset: -6%;
-        border-radius: 50%;
-        background: conic-gradient(
-          from 0deg,
-          transparent 0deg 292deg,
-          var(--boot-haze) 330deg,
-          var(--boot-accent) 356deg,
-          transparent 360deg
-        );
-        -webkit-mask: radial-gradient(circle closest-side, transparent calc(100% - 36px), #000 calc(100% - 35px), #000 calc(100% - 12px), transparent calc(100% - 11px));
-        mask: radial-gradient(circle closest-side, transparent calc(100% - 36px), #000 calc(100% - 35px), #000 calc(100% - 12px), transparent calc(100% - 11px));
-        opacity: 0.8;
-        animation: boot-sweep 2.6s linear infinite;
+      .boot-core__orbit i {
+        position: absolute; left: 0; top: 0;
+        width: 4px; height: 4px;
+        border-radius: 1px;
+        background: var(--boot-accent);
+        opacity: calc(1 - var(--i) * 0.085);
+        offset-path: circle(calc(50% - 3px) at 50% 50%);
+        offset-rotate: 0deg;
+        offset-anchor: 50% 50%;
+        animation: boot-snake 6.4s steps(48, end) infinite;
+        animation-delay: calc(var(--i) * 133.33ms);
+      }
+      .boot-core__orbit i:first-child {
+        width: 5.5px; height: 5.5px;
+        box-shadow: 0 0 8px color-mix(in srgb, var(--boot-accent) 85%, transparent);
       }
       .boot-core__glow {
         position: absolute; inset: 8%;
@@ -381,8 +377,7 @@
       #app-loading.boot-splash--docking .boot-readout,
       #app-loading.boot-splash--docking .boot-foot,
       #app-loading.boot-splash--docking .boot-core__glow,
-      #app-loading.boot-splash--docking .boot-core__ticks,
-      #app-loading.boot-splash--docking .boot-core__sweep,
+      #app-loading.boot-splash--docking .boot-core__orbit,
       #app-loading.boot-splash--docking .boot-core__ring {
         opacity: 0;
         transition: opacity 460ms ease;
@@ -419,9 +414,10 @@
         from { opacity: 0; transform: translateY(10px); }
         to { opacity: 1; transform: none; }
       }
-      @keyframes boot-ring { to { transform: rotate(360deg); } }
-      @keyframes boot-ticks { to { transform: rotate(-360deg); } }
-      @keyframes boot-sweep { to { transform: rotate(360deg); } }
+      @keyframes boot-snake {
+        from { offset-distance: 0%; }
+        to { offset-distance: 100%; }
+      }
       @keyframes boot-pulse {
         0%, 100% { opacity: 0.55; }
         50% { opacity: 1; }
@@ -474,8 +470,8 @@
       <div class="boot-stage" aria-hidden="true">
         <div class="boot-core">
           <span class="boot-core__glow"></span>
-          <span class="boot-core__ticks"></span>
-          <span class="boot-core__sweep"></span>
+          <!-- 方格式彗星：10 节方块，参数与首页头像外那条完全一致（--i 决定它落后几个步长） -->
+          <span class="boot-core__orbit"><i style="--i:0"></i><i style="--i:1"></i><i style="--i:2"></i><i style="--i:3"></i><i style="--i:4"></i><i style="--i:5"></i><i style="--i:6"></i><i style="--i:7"></i><i style="--i:8"></i><i style="--i:9"></i></span>
           <span class="boot-core__ring"></span>
           <span class="boot-core__avatar">
             <span class="boot-core__monogram">AMU</span>
