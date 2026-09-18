@@ -175,6 +175,21 @@ function applyPageSeo(route: string, html: string): string {
   return html
 }
 
+// AGENTS.md §5 #37 — Vuetify's SSR/hydration offset.
+// Vuetify resolves --v-layout-* from a runtime ResizeObserver (see
+// vuetify/lib/composables/layout.js), so the prerendered markup always ships
+// `--v-layout-top:0px`; one frame after hydration the client measures the fixed
+// app bar and rewrites it to the real height. <v-main> consumes that variable as
+// padding-top, so the entire page drops by the app-bar height the moment the
+// bundle boots — on every route, because the app bar is global. The height is
+// already in the same document (the toolbar content's inline style), so pin the
+// SSR value to it and the hydration pass becomes a no-op.
+function pinLayoutOffset(html: string): string {
+  const bar = html.match(/v-toolbar__content[^>]*?height:\s*([\d.]+)px/i)
+  if (!bar) return html // no app bar on this page: nothing reserves top space
+  return html.replace(/--v-layout-top:0px/g, `--v-layout-top:${bar[1]}px`)
+}
+
 const ssgOptions: ViteSSGOptions = {
   script: 'async',
   formatting: 'minify',
@@ -191,6 +206,7 @@ const ssgOptions: ViteSSGOptions = {
   // paints an unstyled / half-styled document for a few hundred ms. Nothing
   // errors, nothing warns — so assert the invariant on every prerendered page.
   onPageRendered(route, html) {
+    html = pinLayoutOffset(html)
     const headEnd = html.indexOf('</head>')
     const bodyStart = html.indexOf('<body')
     const head = html.slice(0, headEnd)
@@ -230,6 +246,18 @@ export default defineConfig({
   ssgOptions,
   ssr: {
     noExternal: ['vuetify']
+  },
+  build: {
+    // AGENTS.md §5 #37 — one stylesheet, in <head>, for every route.
+    // With Vite's default per-chunk CSS splitting, Vuetify's auto-imported
+    // component styles are emitted as separate files that are only requested
+    // when the JS chunk importing them executes. On a cold cache those requests
+    // land ~1.5s AFTER first paint (measured: VContainer-BNxdRoKV.css starts at
+    // 2692ms and ends at 3001ms), and since .v-container carries width /
+    // padding / max-width, that late re-layout moves the page by tens of pixels.
+    // Merging every stylesheet into the single entry file makes them all
+    // render-blocking, so nothing arrives after the first paint.
+    cssCodeSplit: false
   },
   optimizeDeps: {
     include: ['vue', 'vue-router', 'vuetify']
