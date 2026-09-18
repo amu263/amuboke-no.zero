@@ -84,15 +84,16 @@
         /* Base (dark) defaults; the per-theme blocks below override them. */
         --boot-bg: var(--theme-background, #090b0e);
         --boot-ink: var(--theme-on-background, #d4d8e0);
-        --boot-accent: var(--theme-primary, #e8a83e);
-        /* 彗星专用的水蓝：与首页 --portrait-aqua 用**同一个公式、同一批 token**
+        /* 水蓝：与首页 --portrait-aqua 用**同一个公式、同一批 token**
            （accent 52% + info），所以首访动画和首页头像外那条蛇颜色逐像素一致。
-           刻意不复用 --boot-accent：那个是主题主色（暗色琥珀），留给边框/进度条。 */
+           2026-09-15 起整块帘幕都以它为准（不再用主题主色琥珀）：
+           边框、四角括号、进度条、状态点、网格与雾都从这里派生，
+           于是开机界面是单一色相的"青蓝终端"，而不是琥珀底 + 青蓝动点。 */
         --boot-aqua: color-mix(in srgb, var(--theme-accent, #3dd9c4) 52%, var(--theme-info, #7aa2ff));
-        --boot-line: var(--theme-border, rgb(232 168 62 / 0.22));
-        /* AGENTS.md §5 #18: the amber grid needs real alpha to read on #090b0e. */
-        --boot-grid: rgba(232, 168, 62, 0.30);
-        --boot-haze: rgba(232, 168, 62, 0.16);
+        --boot-accent: var(--boot-aqua);
+        --boot-line: color-mix(in srgb, var(--boot-aqua) 30%, transparent);
+        --boot-grid: color-mix(in srgb, var(--boot-aqua) 26%, transparent);
+        --boot-haze: color-mix(in srgb, var(--boot-aqua) 18%, transparent);
 
         position: fixed; inset: 0; z-index: 2147483647;
         box-sizing: border-box;
@@ -115,24 +116,24 @@
       html.v-theme--dark #app-loading {
         --boot-bg: var(--theme-background, #090b0e);
         --boot-ink: var(--theme-on-background, #d4d8e0);
-        --boot-accent: var(--theme-primary, #e8a83e);
         --boot-aqua: color-mix(in srgb, var(--theme-accent, #3dd9c4) 52%, var(--theme-info, #7aa2ff));
-        --boot-line: var(--theme-border, rgb(232 168 62 / 0.22));
-        --boot-grid: rgba(232, 168, 62, 0.30);
-        --boot-haze: rgba(232, 168, 62, 0.16);
+        --boot-accent: var(--boot-aqua);
+        --boot-line: color-mix(in srgb, var(--boot-aqua) 30%, transparent);
+        --boot-grid: color-mix(in srgb, var(--boot-aqua) 26%, transparent);
+        --boot-haze: color-mix(in srgb, var(--boot-aqua) 18%, transparent);
       }
       html.v-theme--light #app-loading {
         --boot-bg: var(--theme-background, #f0f2f5);
         --boot-ink: var(--theme-on-background, #1a1d24);
-        --boot-accent: var(--theme-primary, #2fb5a0);
         --boot-aqua: color-mix(in srgb, var(--theme-accent, #2fb5a0) 52%, var(--theme-info, #3b6ef5));
-        --boot-line: var(--theme-border, rgb(0 0 0 / 0.12));
-        --boot-grid: rgba(47, 181, 160, 0.22);
-        --boot-haze: rgba(47, 181, 160, 0.14);
+        --boot-accent: var(--boot-aqua);
+        --boot-line: color-mix(in srgb, var(--boot-aqua) 28%, transparent);
+        --boot-grid: color-mix(in srgb, var(--boot-aqua) 22%, transparent);
+        --boot-haze: color-mix(in srgb, var(--boot-aqua) 14%, transparent);
         /* Teal #2fb5a0 is only ~2.2:1 on #f0f2f5; mix it toward the ink so the
            small accent labels stay legible. Falls back to --boot-accent when
            color-mix() is unavailable (var fallback at the use site). */
-        --boot-accent-ink: color-mix(in srgb, var(--theme-primary, #2fb5a0) 50%, var(--theme-on-background, #1a1d24));
+        --boot-accent-ink: color-mix(in srgb, var(--boot-aqua) 50%, var(--theme-on-background, #1a1d24));
       }
 
       /* The opaque curtain itself lives on a pseudo-element: during the docking

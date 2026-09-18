@@ -1,10 +1,10 @@
 ---
-title: 给博客装一个开机仪式：首访启动动画、头像归位与流星刻度环的实现
+title: 给博客装一个开机仪式：首访启动动画、头像归位与方格彗星的实现
 slug: boot-splash-and-meteor-halo
 date: 2026-09-15
 category: 建站实践
 draft: false
-summary: 把 Steam 客户端那种开机仪式感搬进网页，但不抄它一个像素。这篇写清两件事的实现方法——全局首访启动帘幕（含头像飞向首页肖像的归位交接），以及肖像外围那圈逆时针刻度环与顺时针流星的两个伪元素写法。全部是 CSS @keyframes 加一点原生 DOM 计算，零动画库。
+summary: 把 Steam 客户端那种开机仪式感搬进网页，但不抄它一个像素。这篇写清两件事的实现方法——全局首访启动帘幕（含头像飞向首页肖像的归位交接），以及肖像外围那条由十节小方块组成、逐格环绕的「贪吃蛇」彗星。全部是 CSS @keyframes 与 offset-path 加一点原生 DOM 计算，零动画库。
 tags:
   - Vue
   - CSS 动画
@@ -13,13 +13,13 @@ tags:
   - 建站实践
 ---
 
-# 给博客装一个开机仪式：首访启动动画、头像归位与流星刻度环的实现
+# 给博客装一个开机仪式：首访启动动画、头像归位与方格彗星的实现
 
 我一直觉得 Steam 客户端开机那一下很有味道：全屏暗场、系统日志一行行滚出来、最后"啪"地交接到主界面。我想在自己的博客上也做出类似的开机感，但**不用它的任何素材、图形或启动库**。
 
-现在的效果是：首次进站时全屏启动帘幕，五行系统启动日志依次出现、进度条走满；结束时帷幕溶解，帘幕中央的头像**飞向首页右侧的肖像并放大贴合**；落位之后，肖像外围一圈刻度环开始逆时针转，一颗水蓝色流星顺时针绕行。
+现在的效果是：首次进站时全屏启动帘幕，五行系统启动日志依次出现、进度条走满；结束时帷幕溶解，帘幕中央的头像**飞向首页右侧的肖像并放大贴合**；落位之后，肖像外围由十节小方块组成的彗星开始逐格环绕——同一套做法在启动帘幕里也跑了一遍，颜色逐像素一致。
 
-这篇把两件事的实现方法写清楚：**首访启动动画（含头像归位交接）** 与 **刻度环 + 流星外框**。没有引入任何动画库，全是 CSS `@keyframes` 加一点原生 DOM 计算。
+这篇把两件事的实现方法写清楚：**首访启动动画（含头像归位交接）** 与 **方格彗星**。没有引入任何动画库，全是 CSS `@keyframes` + `offset-path` 加一点原生 DOM 计算。
 
 ## 0. 先立约束，再写代码
 
@@ -111,7 +111,7 @@ if (!play) {
 
 ## 3. 3.8 秒的节奏表
 
-帘幕里的东西全是 CSS 动画：中央头像 + 一圈信号锁定环 + 一条进度条 + 五行启动日志。
+帘幕里的东西全是 CSS 动画：中央头像 + 环绕它的一条方格彗星 + 一圈静态虚线锁定环 + 一条进度条 + 五行启动日志。
 
 ~~~css
 .boot-progress__fill {
@@ -206,72 +206,58 @@ function startDock(overlay: HTMLElement) {
 
 顺便：如果没有落点目标（比如首访直接落在 `/posts`），这条自动退化成整帘淡出——`:not(.boot-splash--docking)` 就是为这条留的。锚点用的是 `[data-boot-dock]` 这个 data 属性而不是 class，免得以后样式重构把交接契约改坏。
 
-## 6. 流星与刻度环：两个伪元素搞定
+## 6. 方格彗星：不要外框，只要一条"贪吃蛇"
 
-归位之后，肖像外围要有一圈会动的环。这一圈是**两个伪元素**：`::before` 画间隔刻度（逆时针转），`::after` 画流星（顺时针转）。
+第一版我做的是「刻度环 + 平滑流星」：`::before` 画 30 格刻度逆时针转，`::after` 画一条渐隐彗尾顺时针转。上线后自己越看越不对——均匀重复的刻度在环半径上是整个 hero 里元素密度最高的东西，而且对称轮盘转起来**没有任何信息量**（静态截图里根本看不出它在转），画面等于有两个主角。
+
+于是整个外框砍掉，只留一条**由方块组成的彗尾**绕肖像爬：
 
 ~~~css
-.home-page__portrait-halo {
+/* 十节小方块共用一条圆轨道 */
+.home-page__portrait-orbit { position: absolute; inset: -22px; }
+
+.home-page__portrait-orbit i {
   position: absolute;
-  inset: -22px;                 /* 环贴在照片外侧，不吃画面 */
-  border-radius: 50%;
-  pointer-events: none;
-  --aqua: color-mix(in srgb, var(--theme-accent) 52%, var(--theme-info));
+  left: 0; top: 0;
+  width: var(--snake-cell, 6px);
+  height: var(--snake-cell, 6px);
+  border-radius: 1px;
+  background: var(--portrait-aqua);
+  opacity: calc(1 - var(--i) * 0.085);        /* 越往尾越淡 */
+  offset-path: circle(calc(50% - 3px) at 50% 50%);
+  offset-rotate: 0deg;                        /* 关键：方块永远正着 */
+  offset-anchor: 50% 50%;
+  animation: portrait-snake 6.4s steps(48, end) infinite;
+  animation-delay: calc(var(--i) * 133.33ms); /* 每节晚一个步长出发 */
 }
 
-/* 间隔刻度圆框：repeating-conic 切出 1.4°/12° 的刻度 */
-.home-page__portrait-halo::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  border-radius: 50%;
-  background: repeating-conic-gradient(
-    from 0deg,
-    var(--aqua) 0deg 1.4deg,
-    transparent 1.4deg 12deg
-  );
-  -webkit-mask: radial-gradient(circle closest-side,
-    transparent calc(100% - 20px), #000 calc(100% - 19px),
-    #000 calc(100% - 6px), transparent calc(100% - 5px));
-  mask: radial-gradient(circle closest-side,
-    transparent calc(100% - 20px), #000 calc(100% - 19px),
-    #000 calc(100% - 6px), transparent calc(100% - 5px));
-  opacity: .55;
-  animation: home-portrait-ticks 9s linear infinite;
+@keyframes portrait-snake {
+  from { offset-distance: 0%; }
+  to   { offset-distance: 100%; }
 }
-
-/* 流星：conic 的尾部渐隐 + 亮头，绕同一圈公转 */
-.home-page__portrait-halo::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  border-radius: 50%;
-  background: conic-gradient(
-    from 0deg,
-    transparent 0deg 278deg,
-    color-mix(in srgb, var(--aqua) 38%, transparent) 322deg,
-    var(--aqua) 356deg,
-    transparent 360deg
-  );
-  -webkit-mask: radial-gradient(circle closest-side, /* 同一条环带 */ ...);
-  mask: radial-gradient(circle closest-side, /* 同一条环带 */ ...);
-  filter: drop-shadow(0 0 6px color-mix(in srgb, var(--aqua) 65%, transparent));
-  animation: home-portrait-meteor 6.4s linear infinite;
-}
-
-@keyframes home-portrait-ticks  { to { transform: rotate(-360deg); } }
-@keyframes home-portrait-meteor { to { transform: rotate(360deg); } }
 ~~~
 
-**坑二（本次最贵的一个）：`radial-gradient` 默认是 `farthest-corner`。**
+三条要点，每条都是踩了才写下来的。
 
-我按"半径百分比"写环带（`transparent 78%, #000 79%, #000 84%`），以为百分比是按半径算的——其实默认 `farthest-corner` 是按**对角**距离算，于是环带的实际半径超出了正方形内切圆，**正交方向一个像素都看不到**，只有四个角上有点东西。修法是显式写 `circle closest-side`，让 100% 等于元素半径，带宽再用 `calc(100% - Npx)` 表达，位置就和元素尺寸解耦了。
+**一、方块必须永远"正着"，靠的是 `offset-rotate: 0deg`。**
 
-顺带一提，启动帘幕里那圈刻度环用的是同一个写法，也一起中过招。
+常规做法是把方块摆到轨道上：`transform: rotate(A) translateY(-R)`。但那样方块自己也被转了，走到 45° 位置就变成**菱形**，"方格"两个字直接不成立。`offset-path` 负责定位、`offset-rotate: 0deg` 保证**朝向恒定**，于是方块永远和页面网格对齐。验证很便宜：量方块的 `getBoundingClientRect()`——正着是 6.000px，倾斜 45° 会变成 8.49px。
 
-**为什么要一顺一逆。** 刻度环 `-360deg`（逆时针 9s 一圈），流星 `+360deg`（顺时针 6.4s 一圈）。两个反向转起来有"咬合"的机械感，比同向更耐看；而且刻度环 9s 这个数不是随便挑的——它跟启动帘幕里那圈信号锁定环**同向同速**，所以归位之后你会觉得是同一个环留在了肖像上，而不是换了一个新装饰。
+**二、`steps()` 才是"贪吃蛇"，`linear` 只是"流星"。**
 
-颜色上 `--aqua` 是从现有主题 token 混出来的（`accent` 52% + `info`），暗色偏青、亮色自动跟上，没有另立一套配色。
+`animation: portrait-snake 6.4s steps(48, end)` 让整条链一圈跳 48 次、每次 7.5°；相邻两节的延时正好差一个步长，于是看起来是蛇一节节往前拱。把 `steps(48)` 换回 `linear`，同一套 DOM 立刻退化成一条平滑滑行的彗星——两种手感由同一个参数决定。实测 26 次采样里，蛇头只落在 7.5° 的整数倍上，每次恰好 +7.5°，这就是"逐格"的证据。
+
+**三、负延时会让尾巴跑到头前面——这次实测才抓到。**
+
+第一版我写的是 `animation-delay: calc(var(--i) * -133.33ms)`，以为"负延时 = 落后"。恰恰相反：负延时是让动画**提前起跑**，于是第 1 节比蛇头还超前，整条淡尾跑到了头前面——看上去是一颗**倒着飞**的彗星。改成正延时（每节晚一个步长出发）才对：头在前、尾在后。
+
+这个 bug 在运动里用肉眼很难判断，**冻结动画、逐节读角度**一秒就暴露——相邻角度差必须全部为正。动画开头 1.2s 会把尾巴逐渐拉开，那段时间还在启动帘幕后面，看不见。
+
+**坑二：`radial-gradient` 默认是 `farthest-corner`。**（这一版已经不用环形遮罩了，但坑是真的，留个记号。）
+
+第一版的光环是用 `radial-gradient` 把 conic 渐变裁成一圈窄环带的。我按"半径百分比"写（`transparent 78%, #000 79%, #000 84%`），以为百分比按半径算——其实默认 `farthest-corner` 是按**对角**距离算，于是环带的实际半径超出正方形内切圆，**正交方向一个像素都看不到**，只有四个角上有点东西。修法是显式 `circle closest-side`，让 100% 等于元素半径，带宽用 `calc(100% - Npx)` 表达，位置就和元素尺寸解耦。
+
+**颜色与缩放的顺带好处。** `--portrait-aqua` 从现有 token 混出来（`accent` 52% + `info`），暗色偏青、亮色自动跟上；启动帘幕里那条同样的蛇用**同一个公式**，所以首访动画和首页那条颜色逐字相同（实测两边 computed color 完全一致）。另外 `circle(calc(50% - 3px) at 50% 50%)` 里的百分比相对**容器**解析，肖像在窄屏缩小时轨道自动跟着缩，不需要任何媒体查询。
 
 ## 7. 没有 Playwright 怎么验证动画
 
@@ -292,10 +278,11 @@ const ws = new WebSocket(list.find(t => t.type === 'page').webSocketDebuggerUrl)
 
 | 项目 | 实测 |
 | --- | --- |
-| 刻度环角度 | -96° → -144.7° → -192.7° → -240.7°（每 3.64s -144.7°）|
-| 刻度环周期与方向 | 逆时针 9.05s 一圈 |
-| 流星角度 | 135° → 203° → 271° → 338° |
-| 流星周期与方向 | 顺时针 6.4s 一圈 |
+| 彗星节数 / 轨道半径 | 10 节 / 249px（照片半径 230px）|
+| 相邻节角度差 | 恒为 7.5°（= 360/48，正好一个步长）|
+| 方块朝向 | 6.000px 方框（倾斜 45° 会是 8.49px）→ 正着 |
+| 逐格跳 | 26 次采样只落在 7.5° 整数倍上，每次恰好 +7.5° |
+| 亮度梯度 | 头 opacity 1 → 尾 0.235（像素：头 #5abfe0 vs 尾 #1a333c）|
 | 归位落点误差 | 桌面 0.00px / 移动端 0.00px（四项全 0）|
 | 启动日志错落 | 0/5 → 1/5 → 2/5 → 3/5 → 4/5 → 5/5 |
 
@@ -306,7 +293,9 @@ const ws = new WebSocket(list.find(t => t.type === 'page').webSocketDebuggerUrl)
 | 坑 | 症状 | 修法 |
 | --- | --- | --- |
 | `animation-fill-mode: forwards` + delay | 元素首帧就可见，到点才闪一下 | 改 `both` |
-| `radial-gradient` 默认 `farthest-corner` | 环带只在四个角上有，正交方向看不见 | 显式 `circle closest-side` + `calc(100% - Npx)` |
+| `radial-gradient` 默认 `farthest-corner` | 环形遮罩只在四个角上有，正交方向看不见 | 显式 `circle closest-side` + `calc(100% - Npx)`（第一版光环踩到）|
+| 方块被路径带偏成菱形 | 「方格」变成斜方块 | `offset-rotate: 0deg` 锁住朝向 |
+| 负 `animation-delay` | 尾巴跑到蛇头前面，彗星倒着飞 | 改正值延时；冻结动画逐节量角度验证 |
 | `getComputedStyle` 读百分比圆角 | 拿到字符串 `"50%"`，当 50px 用 | 按盒子尺寸解析百分比 |
 | 父级 `opacity` 淡出 | 飞行中的头像跟着一起变透明 | 把不透明背景挪到 `::before` |
 | 冻结入场动画冻过头 | 帘幕淡出后露出空页面 | 解冻时机钉在"淡出开始"那一帧 |
@@ -316,7 +305,7 @@ const ws = new WebSocket(list.find(t => t.type === 'page').webSocketDebuggerUrl)
 
 | 时刻 | 发生什么 |
 | --- | --- |
-| 0ms | 帘幕上屏（此时 JS bundle 可能还没到），刻度环开始转 |
+| 0ms | 帘幕上屏（此时 JS bundle 可能还没到），方格彗星开始逐格爬行 |
 | 500 → 3300ms | 五行启动日志依次出现 |
 | 0 → 3800ms | 进度条走满 |
 | 3800ms | 帷幕开始溶解（600ms）· 头像起飞（1150ms）· 主页入场动画解冻 |
