@@ -272,6 +272,11 @@ const socialLinks = [
   --portrait-size: min(100%, 460px);
   /* 水蓝：主强调色与信息色按 token 混出来，不引入脱离主题的固定色 */
   --portrait-aqua: color-mix(in srgb, var(--theme-accent) 52%, var(--theme-info));
+  /* 外框的两个中性档位：只有流星用饱和水蓝，其余都朝边框色稀释。
+     定位标刻意比轨道更"水蓝"、也不比轨道暗——否则层级会反过来，
+     框看起来像脏掉的圆而不是精密刻度（第一版就踩了这个）。 */
+  --halo-track: color-mix(in srgb, var(--theme-border) 85%, var(--portrait-aqua) 15%);
+  --halo-mark: color-mix(in srgb, var(--portrait-aqua) 70%, var(--theme-border) 30%);
 }
 .home-page__portrait-disc {
   position: relative;
@@ -286,17 +291,29 @@ const socialLinks = [
   object-fit: contain;
   display: block;
   border-radius: 50%;
+  /* 内侧 1px 亮线：让圆盘像「嵌进」框里，而不是浮在框上 */
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--theme-border) 72%, transparent);
 }
-/* ── 间隔圆框 + 水蓝流星 ─────────────────────────────────────────────
-   两个伪元素都靠 mask 裁成一圈很窄的环带：
-     ::before = repeating-conic 刻度，静止不动的「间隔圆框」
-     ::after  = conic 流星（尾部渐隐 + 亮头），绕环匀速公转
-   都消费 --portrait-aqua，随主题自动改对比度；不引第三方动画库。 */
+/* ── 归位后的外框：细轨道 + 四点定位 + 水蓝流星 ───────────────────────
+   设计取舍（2026-09-15，实验分支 exp/halo-refined）：
+     · 去掉原来的 30 格**旋转表盘**。均匀重复的刻度在环半径上是整个画面里
+       最吵的元素；而且对称轮盘转起来没有任何信息量，只剩噪声。
+     · 换成一个发丝细的整圆轨道（负责"框"的存在感）+ 四个短弧定位标
+       （每 90° 一个，落在 12/3/6/9 正交点，读起来是仪器定位而不是钟表刻度），
+       两者都**静止**。
+     · 全画面只保留一个饱和色焦点：流星。轨道与定位标都朝 --theme-border
+       稀释，于是水蓝只出现在真正在动的那一笔上 —— 这是本次改造的核心。
+     · 流星本身也重画：更长的渐隐尾 + 一点亮头，环带比定位标略粗，形成
+       照片 > 流星 > 轨道 > 定位标的清晰层级。
+   注意 closest-side 必须保留：radial-gradient 默认 farthest-corner 会按对角
+   距离算百分比，环带会被推到四个角上。 */
 .home-page__portrait-halo {
   position: absolute;
   inset: -22px;
   border-radius: 50%;
   pointer-events: none;
+  /* 发丝轨道：整圆，只掺 15% 水蓝（几乎中性），安静但有存在感 */
+  border: 1px solid var(--halo-track);
 }
 .home-page__portrait-halo::before,
 .home-page__portrait-halo::after {
@@ -305,41 +322,46 @@ const socialLinks = [
   inset: 0;
   border-radius: 50%;
 }
+/* 四点定位标：四条 18° 短弧，静止不转 */
 .home-page__portrait-halo::before {
-  background: repeating-conic-gradient(
-    from 0deg,
-    var(--portrait-aqua) 0deg 1.4deg,
-    transparent 1.4deg 12deg
-  );
-  /* closest-side 是关键：radial-gradient 默认 farthest-corner，百分比按**对角**
-     距离算，环带会被推到四个角上、正交方向一个像素都看不到（本会话真实踩到）。
-     用了 closest-side 之后 100% = 元素半径，照片半径 = 100% - 22px，
-     于是环带落在 100%-20px ~ 100%-6px，正好贴着照片外侧。 */
-  -webkit-mask: radial-gradient(circle closest-side, transparent calc(100% - 20px), #000 calc(100% - 19px), #000 calc(100% - 6px), transparent calc(100% - 5px));
-  mask: radial-gradient(circle closest-side, transparent calc(100% - 20px), #000 calc(100% - 19px), #000 calc(100% - 6px), transparent calc(100% - 5px));
-  opacity: 0.55;
-  /* 与启动帘幕的 .boot-core__ticks 同向同速（逆时针 9s 一圈），
-     归位之后刻度环继续以同一角速度转——帘幕与首页是同一个环的两次现身。 */
-  animation: home-portrait-ticks 9s linear infinite;
-}
-.home-page__portrait-halo::after {
   background: conic-gradient(
-    from 0deg,
-    transparent 0deg 278deg,
-    color-mix(in srgb, var(--portrait-aqua) 38%, transparent) 322deg,
-    var(--portrait-aqua) 356deg,
-    transparent 360deg
+    from -9deg,
+    var(--halo-mark) 0deg 18deg, transparent 18deg 81deg,
+    var(--halo-mark) 81deg 99deg, transparent 99deg 171deg,
+    var(--halo-mark) 171deg 189deg, transparent 189deg 261deg,
+    var(--halo-mark) 261deg 279deg, transparent 279deg 351deg,
+    var(--halo-mark) 351deg 360deg
   );
-  -webkit-mask: radial-gradient(circle closest-side, transparent calc(100% - 19px), #000 calc(100% - 18px), #000 calc(100% - 7px), transparent calc(100% - 6px));
-  mask: radial-gradient(circle closest-side, transparent calc(100% - 19px), #000 calc(100% - 18px), #000 calc(100% - 7px), transparent calc(100% - 6px));
-  filter: drop-shadow(0 0 6px color-mix(in srgb, var(--portrait-aqua) 65%, transparent));
+  /* 环带紧贴轨道内侧：100% = 元素半径（closest-side），带落在 100%-3px ~ 100%-1px */
+  -webkit-mask: radial-gradient(circle closest-side, transparent calc(100% - 4px), #000 calc(100% - 3px), #000 calc(100% - 1px), transparent 100%);
+  mask: radial-gradient(circle closest-side, transparent calc(100% - 4px), #000 calc(100% - 3px), #000 calc(100% - 1px), transparent 100%);
+  opacity: 0.6;
+}
+/* 水蓝流星：画面里唯一在动的东西，顺时针 6.4s 一圈 */
+.home-page__portrait-halo::after {
+  background:
+    /* 亮头：一个小核，让"流星"有个明确的头 */
+    radial-gradient(circle at 50% 1.6px,
+      color-mix(in srgb, var(--portrait-aqua) 90%, transparent) 0 1.4px,
+      transparent 2.4px),
+    /* 彗尾：284° 起渐隐，到 357° 收成一个亮头 */
+    conic-gradient(
+      from 0deg,
+      transparent 0deg 284deg,
+      color-mix(in srgb, var(--portrait-aqua) 16%, transparent) 312deg,
+      color-mix(in srgb, var(--portrait-aqua) 42%, transparent) 336deg,
+      color-mix(in srgb, var(--portrait-aqua) 74%, transparent) 350deg,
+      var(--portrait-aqua) 357deg,
+      transparent 360deg
+    );
+  /* 环带比定位标略宽：层级 = 照片 > 流星 > 轨道 > 定位标 */
+  -webkit-mask: radial-gradient(circle closest-side, transparent calc(100% - 6px), #000 calc(100% - 5px), #000 calc(100% - 1.4px), transparent 100%);
+  mask: radial-gradient(circle closest-side, transparent calc(100% - 6px), #000 calc(100% - 5px), #000 calc(100% - 1.4px), transparent 100%);
+  filter: drop-shadow(0 0 7px color-mix(in srgb, var(--portrait-aqua) 55%, transparent));
   animation: home-portrait-meteor 6.4s linear infinite;
 }
 @keyframes home-portrait-meteor {
-  to { transform: rotate(360deg); }   /* 流星顺时针 */
-}
-@keyframes home-portrait-ticks {
-  to { transform: rotate(-360deg); }  /* 刻度环逆时针（与帘幕一致） */
+  to { transform: rotate(360deg); }   /* 只有流星在转，且只有一个方向 */
 }
 .home-page__portrait-overlay { position: absolute; bottom: 0.35rem; right: 0.85rem; }
 .home-page__portrait-label { font-size: var(--theme-font-size-xs) !important; opacity: 0.5; }
