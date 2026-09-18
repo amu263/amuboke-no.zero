@@ -85,6 +85,10 @@
         --boot-bg: var(--theme-background, #090b0e);
         --boot-ink: var(--theme-on-background, #d4d8e0);
         --boot-accent: var(--theme-primary, #e8a83e);
+        /* 彗星专用的水蓝：与首页 --portrait-aqua 用**同一个公式、同一批 token**
+           （accent 52% + info），所以首访动画和首页头像外那条蛇颜色逐像素一致。
+           刻意不复用 --boot-accent：那个是主题主色（暗色琥珀），留给边框/进度条。 */
+        --boot-aqua: color-mix(in srgb, var(--theme-accent, #3dd9c4) 52%, var(--theme-info, #7aa2ff));
         --boot-line: var(--theme-border, rgb(232 168 62 / 0.22));
         /* AGENTS.md §5 #18: the amber grid needs real alpha to read on #090b0e. */
         --boot-grid: rgba(232, 168, 62, 0.30);
@@ -112,6 +116,7 @@
         --boot-bg: var(--theme-background, #090b0e);
         --boot-ink: var(--theme-on-background, #d4d8e0);
         --boot-accent: var(--theme-primary, #e8a83e);
+        --boot-aqua: color-mix(in srgb, var(--theme-accent, #3dd9c4) 52%, var(--theme-info, #7aa2ff));
         --boot-line: var(--theme-border, rgb(232 168 62 / 0.22));
         --boot-grid: rgba(232, 168, 62, 0.30);
         --boot-haze: rgba(232, 168, 62, 0.16);
@@ -120,6 +125,7 @@
         --boot-bg: var(--theme-background, #f0f2f5);
         --boot-ink: var(--theme-on-background, #1a1d24);
         --boot-accent: var(--theme-primary, #2fb5a0);
+        --boot-aqua: color-mix(in srgb, var(--theme-accent, #2fb5a0) 52%, var(--theme-info, #3b6ef5));
         --boot-line: var(--theme-border, rgb(0 0 0 / 0.12));
         --boot-grid: rgba(47, 181, 160, 0.22);
         --boot-haze: rgba(47, 181, 160, 0.14);
@@ -257,7 +263,8 @@
         position: absolute; left: 0; top: 0;
         width: 4px; height: 4px;
         border-radius: 1px;
-        background: var(--boot-accent);
+        /* 与首页同色：accent 52% + info（暗色偏青、亮色偏蓝），不是主题主色 */
+        background: var(--boot-aqua);
         opacity: calc(1 - var(--i) * 0.085);
         offset-path: circle(calc(50% - 3px) at 50% 50%);
         offset-rotate: 0deg;
@@ -267,7 +274,7 @@
       }
       .boot-core__orbit i:first-child {
         width: 5.5px; height: 5.5px;
-        box-shadow: 0 0 8px color-mix(in srgb, var(--boot-accent) 85%, transparent);
+        box-shadow: 0 0 8px color-mix(in srgb, var(--boot-aqua) 85%, transparent);
       }
       .boot-core__glow {
         position: absolute; inset: 8%;
