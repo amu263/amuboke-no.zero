@@ -114,8 +114,12 @@ const socialLinks = [
       </section>
       <div class="home-page__hero-portrait">
         <div class="home-page__portrait-disc">
-          <!-- 间隔刻度圆框 + 水蓝流星：纯装饰，两个伪元素，不参与布局与命中测试 -->
-          <span class="home-page__portrait-halo" aria-hidden="true"></span>
+          <!-- 方格式彗星：没有外框，只有一条由方块组成的彗尾绕肖像爬行。
+               10 节方块共用一条 offset-path 圆轨道，靠 animation-delay 依次落后
+               一个步长，于是看起来是蛇一节节往前拱。纯装饰，不参与命中测试。 -->
+          <span class="home-page__portrait-orbit" aria-hidden="true">
+            <i v-for="n in 10" :key="n" :style="{ '--i': String(n - 1) }"></i>
+          </span>
           <!-- data-boot-dock: 启动帘幕的归位锚点（见 composables/useBootSplash.ts）。
                与帘幕中央的头像必须是同一张素材；圆角由这张 img 自己承担，
                归位飞行因此一路保持圆形裁剪，落地即同一个圆。 -->
@@ -272,11 +276,8 @@ const socialLinks = [
   --portrait-size: min(100%, 460px);
   /* 水蓝：主强调色与信息色按 token 混出来，不引入脱离主题的固定色 */
   --portrait-aqua: color-mix(in srgb, var(--theme-accent) 52%, var(--theme-info));
-  /* 外框的两个中性档位：只有流星用饱和水蓝，其余都朝边框色稀释。
-     定位标刻意比轨道更"水蓝"、也不比轨道暗——否则层级会反过来，
-     框看起来像脏掉的圆而不是精密刻度（第一版就踩了这个）。 */
-  --halo-track: color-mix(in srgb, var(--theme-border) 85%, var(--portrait-aqua) 15%);
-  --halo-mark: color-mix(in srgb, var(--portrait-aqua) 70%, var(--theme-border) 30%);
+  /* 方格彗星的单节边长（蛇头会再大 1.5px） */
+  --snake-cell: 6px;
 }
 .home-page__portrait-disc {
   position: relative;
@@ -291,77 +292,55 @@ const socialLinks = [
   object-fit: contain;
   display: block;
   border-radius: 50%;
-  /* 内侧 1px 亮线：让圆盘像「嵌进」框里，而不是浮在框上 */
+  /* 内侧 1px 亮线：让圆盘边缘干净，不是"浮"在背景上（它属于照片自己，不是外框） */
   box-shadow: 0 0 0 1px color-mix(in srgb, var(--theme-border) 72%, transparent);
 }
-/* ── 归位后的外框：细轨道 + 四点定位 + 水蓝流星 ───────────────────────
+/* ── 方格式彗星：不要外框，只要一条"贪吃蛇"在环绕 ─────────────────────
    设计取舍（2026-09-15，实验分支 exp/halo-refined）：
-     · 去掉原来的 30 格**旋转表盘**。均匀重复的刻度在环半径上是整个画面里
-       最吵的元素；而且对称轮盘转起来没有任何信息量，只剩噪声。
-     · 换成一个发丝细的整圆轨道（负责"框"的存在感）+ 四个短弧定位标
-       （每 90° 一个，落在 12/3/6/9 正交点，读起来是仪器定位而不是钟表刻度），
-       两者都**静止**。
-     · 全画面只保留一个饱和色焦点：流星。轨道与定位标都朝 --theme-border
-       稀释，于是水蓝只出现在真正在动的那一笔上 —— 这是本次改造的核心。
-     · 流星本身也重画：更长的渐隐尾 + 一点亮头，环带比定位标略粗，形成
-       照片 > 流星 > 轨道 > 定位标的清晰层级。
-   注意 closest-side 必须保留：radial-gradient 默认 farthest-corner 会按对角
-   距离算百分比，环带会被推到四个角上。 */
-.home-page__portrait-halo {
+     · 整圈框架、刻度、发丝轨道全部去掉 —— 画面里只剩一条由**方块**组成的彗尾。
+     · 每一节都是正方形，靠 offset-rotate: 0deg 始终与页面网格对齐。普通
+       rotate() 会把方块一起转成菱形，"方格"就不成立了。
+     · 用 steps() 让整条链**逐格跳**（48 格/圈，每格 7.5°）；相邻两节的
+       animation-delay 正好差一个步长，于是看起来是蛇一节节往前拱，
+       而不是一条平滑渐隐的弧。
+     · offset-path 的圆半径写成 calc(50% - 3px)：百分比相对容器解析，
+       所以肖像在窄屏缩小时轨道自动跟着缩，不需要媒体查询。
+     · 画面里仍然只有一个饱和色（彗尾的水蓝），没有任何静态装饰抢它。 */
+.home-page__portrait-orbit {
   position: absolute;
   inset: -22px;
   border-radius: 50%;
   pointer-events: none;
-  /* 发丝轨道：整圆，只掺 15% 水蓝（几乎中性），安静但有存在感 */
-  border: 1px solid var(--halo-track);
 }
-.home-page__portrait-halo::before,
-.home-page__portrait-halo::after {
-  content: '';
+.home-page__portrait-orbit i {
   position: absolute;
-  inset: 0;
-  border-radius: 50%;
+  left: 0;
+  top: 0;
+  width: var(--snake-cell, 6px);
+  height: var(--snake-cell, 6px);
+  border-radius: 1px;
+  background: var(--portrait-aqua);
+  /* 越往尾越淡：10 节刚好在 75° 内收干净 */
+  opacity: calc(1 - var(--i) * 0.085);
+  offset-path: circle(calc(50% - 3px) at 50% 50%);
+  offset-rotate: 0deg;
+  offset-anchor: 50% 50%;
+  animation: portrait-snake 6.4s steps(48, end) infinite;
+  /* 正值延时：第 N 节比蛇头**晚**开始 N 个步长 → 它永远落后蛇头 N 格，
+     于是亮头在前、淡尾在后。用负延时会反过来（元素"提前跑"），
+     整条尾巴跑到头前面，看着像一颗倒着飞的彗星——这个坑实测才暴露。
+     头 1.2s 内会把尾巴逐渐拉开，那段时间还在启动帘幕后面，看不见。 */
+  animation-delay: calc(var(--i) * 133.33ms);
 }
-/* 四点定位标：四条 18° 短弧，静止不转 */
-.home-page__portrait-halo::before {
-  background: conic-gradient(
-    from -9deg,
-    var(--halo-mark) 0deg 18deg, transparent 18deg 81deg,
-    var(--halo-mark) 81deg 99deg, transparent 99deg 171deg,
-    var(--halo-mark) 171deg 189deg, transparent 189deg 261deg,
-    var(--halo-mark) 261deg 279deg, transparent 279deg 351deg,
-    var(--halo-mark) 351deg 360deg
-  );
-  /* 环带紧贴轨道内侧：100% = 元素半径（closest-side），带落在 100%-3px ~ 100%-1px */
-  -webkit-mask: radial-gradient(circle closest-side, transparent calc(100% - 4px), #000 calc(100% - 3px), #000 calc(100% - 1px), transparent 100%);
-  mask: radial-gradient(circle closest-side, transparent calc(100% - 4px), #000 calc(100% - 3px), #000 calc(100% - 1px), transparent 100%);
-  opacity: 0.6;
+/* 蛇头：略大 + 一点辉光，是画面里唯一的亮点 */
+.home-page__portrait-orbit i:first-child {
+  width: calc(var(--snake-cell, 6px) + 1.5px);
+  height: calc(var(--snake-cell, 6px) + 1.5px);
+  box-shadow: 0 0 8px color-mix(in srgb, var(--portrait-aqua) 85%, transparent);
 }
-/* 水蓝流星：画面里唯一在动的东西，顺时针 6.4s 一圈 */
-.home-page__portrait-halo::after {
-  background:
-    /* 亮头：一个小核，让"流星"有个明确的头 */
-    radial-gradient(circle at 50% 1.6px,
-      color-mix(in srgb, var(--portrait-aqua) 90%, transparent) 0 1.4px,
-      transparent 2.4px),
-    /* 彗尾：284° 起渐隐，到 357° 收成一个亮头 */
-    conic-gradient(
-      from 0deg,
-      transparent 0deg 284deg,
-      color-mix(in srgb, var(--portrait-aqua) 16%, transparent) 312deg,
-      color-mix(in srgb, var(--portrait-aqua) 42%, transparent) 336deg,
-      color-mix(in srgb, var(--portrait-aqua) 74%, transparent) 350deg,
-      var(--portrait-aqua) 357deg,
-      transparent 360deg
-    );
-  /* 环带比定位标略宽：层级 = 照片 > 流星 > 轨道 > 定位标 */
-  -webkit-mask: radial-gradient(circle closest-side, transparent calc(100% - 6px), #000 calc(100% - 5px), #000 calc(100% - 1.4px), transparent 100%);
-  mask: radial-gradient(circle closest-side, transparent calc(100% - 6px), #000 calc(100% - 5px), #000 calc(100% - 1.4px), transparent 100%);
-  filter: drop-shadow(0 0 7px color-mix(in srgb, var(--portrait-aqua) 55%, transparent));
-  animation: home-portrait-meteor 6.4s linear infinite;
-}
-@keyframes home-portrait-meteor {
-  to { transform: rotate(360deg); }   /* 只有流星在转，且只有一个方向 */
+@keyframes portrait-snake {
+  from { offset-distance: 0%; }
+  to { offset-distance: 100%; }
 }
 .home-page__portrait-overlay { position: absolute; bottom: 0.35rem; right: 0.85rem; }
 .home-page__portrait-label { font-size: var(--theme-font-size-xs) !important; opacity: 0.5; }
