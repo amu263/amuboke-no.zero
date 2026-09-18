@@ -119,9 +119,18 @@ function applyPageSeo(route: string, html: string): string {
   )
 
   // Replace or add <meta name="description">
+  // The pattern MUST swallow the tag's closing '>': the replacement already
+  // emits one, and leaving the original behind produces `...">>`. That stray
+  // '>' is a non-whitespace character token, so the HTML parser pops <head> on
+  // the spot and re-parents everything after it — the boot script, the splash
+  // critical CSS, the noscript fallback, the entry <script> AND the entry
+  // stylesheet — into <body>. The 318KB entry stylesheet then stops being a
+  // render-blocking head resource, the first paint lands on an unstyled /
+  // half-styled document, and a hard refresh visibly "snaps" into place once
+  // the CSS finally arrives.
   if (/<meta name="description"/.test(html)) {
     html = html.replace(
-      /<meta name="description" content="[^"]*"/i,
+      /<meta name="description" content="[^"]*">/i,
       `<meta name="description" content="${seo.description}">`
     )
   } else {
@@ -173,6 +182,33 @@ const ssgOptions: ViteSSGOptions = {
   dirStyle: 'nested',
   onBeforePageRender(route, html) {
     return applyPageSeo(route, html)
+  },
+  // AGENTS.md §5 #36 — regression guard for the trap above.
+  // A single stray '>' inside <head> is enough to make the HTML parser pop
+  // <head> on the spot: every following node (boot script, splash critical CSS,
+  // noscript, entry <script> and the entry stylesheet) is re-parented into
+  // <body>, the stylesheet stops being render-blocking, and a hard refresh
+  // paints an unstyled / half-styled document for a few hundred ms. Nothing
+  // errors, nothing warns — so assert the invariant on every prerendered page.
+  onPageRendered(route, html) {
+    const headEnd = html.indexOf('</head>')
+    const bodyStart = html.indexOf('<body')
+    const head = html.slice(0, headEnd)
+    const body = html.slice(bodyStart)
+    // Two independent invariants, because a truncated <head> is silent:
+    //  1. <head> must close before <body> starts;
+    //  2. no stylesheet may be stranded in <body> — a body stylesheet is only
+    //     discovered after the parser gets there, so it stops gating the first
+    //     paint and the page flashes unstyled.
+    const problems: string[] = []
+    if (headEnd === -1 || bodyStart === -1 || headEnd > bodyStart) problems.push('head/body order')
+    if (!/<link[^>]+rel="stylesheet"/.test(head)) problems.push('no render-blocking stylesheet in <head>')
+    const stranded = body.match(/<link[^>]+rel="stylesheet"[^>]*>/g)
+    if (stranded) problems.push('stylesheet stranded in <body>: ' + stranded.join(' '))
+    if (problems.length) {
+      throw new Error(`[ssg] ${route}: ${problems.join('; ')} (see AGENTS.md §5 #36)`)
+    }
+    return html
   },
 } satisfies ViteSSGOptions
 
