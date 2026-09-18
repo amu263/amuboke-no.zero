@@ -11,7 +11,6 @@
 // 页面壳只 import 这一个文件，不再各自 glob。AGENTS §2 硬规则：写内容的人只能动
 // content/ 下文件；这个文件作为「内容→代码」的唯一桥，桥的代码归开发者维护。
 
-import { computed } from 'vue'
 import {
   parseChannels,
   parseListen,
@@ -228,8 +227,6 @@ const INDEX_SOURCES: readonly IndexSourceItem[] = Object.freeze([
 ])
 
 const CONTENT_INDEX = buildContentIndex(INDEX_SOURCES)
-export const CONTENT_BY_CHANNEL = CONTENT_INDEX.byChannel
-export const RECENT_UPDATES = CONTENT_INDEX.recentUpdates
 export const ACTIVITY_HEATMAP = CONTENT_INDEX.activityHeatmap
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -258,20 +255,8 @@ export function getContentSummary(): ContentSummary {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// 路径生成器：写路由的人用这俩函数，不要散写字符串拼接
+// 路径生成器：写路由的人用这个函数，不要散写字符串拼接
 // ─────────────────────────────────────────────────────────────────────────────
 export function postRoute(slug: string): string {
   return `/posts/${slug}`
 }
-export function galleryRoute(slug: string): string {
-  return `/gallery/${slug}`
-}
-export function projectRoute(slug: string): string {
-  return `/projects/${slug}`
-}
-
-// 兼容 reactive 消费方：computed(() => POSTS) 直接可用，因为 readonly 数组是 frozen
-export const postsReactive = computed(() => POSTS)
-export const galleriesReactive = computed(() => GALLERIES)
-export const projectsReactive = computed(() => PROJECTS)
-export const friendsReactive = computed(() => FRIENDS)

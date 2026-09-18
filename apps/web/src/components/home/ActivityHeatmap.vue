@@ -326,23 +326,6 @@ function onKey(e: KeyboardEvent, row: number, col: number) {
 }
 
 /* Tooltip */
-.ah-tooltip {
-  position: fixed;
-  z-index: 100;
-  transform: translate(-50%, calc(-100% - 10px));
-  white-space: nowrap;
-  padding: 5px 9px;
-  background: color-mix(in srgb, var(--theme-surface) 92%, var(--theme-primary));
-  border: 1px solid color-mix(in srgb, var(--theme-primary) 55%, var(--theme-border));
-  border-radius: var(--theme-radius-sm);
-  font-family: var(--theme-font-mono);
-  font-size: var(--theme-font-size-xs);
-  color: var(--theme-on-surface);
-  line-height: 1.35;
-  backdrop-filter: blur(8px);
-  pointer-events: none;
-  box-shadow: var(--theme-shadow-md);
-}
 .ah-cell[data-tooltip]::after {
   content: attr(data-tooltip);
   position: absolute;
@@ -367,15 +350,6 @@ function onKey(e: KeyboardEvent, row: number, col: number) {
 }
 .ah-cell[data-tooltip]:hover::after,
 .ah-cell[data-tooltip]:focus-visible::after { display: block; }
-.ah-tooltip::after {
-  content: '';
-  position: absolute;
-  top: 100%;
-  left: 50%;
-  transform: translateX(-50%);
-  border: 3px solid transparent;
-  border-top-color: var(--theme-scrimStrong);
-}
 
 @media (prefers-reduced-motion: reduce) {
   .ah-cell { transition: none; }
