@@ -1,18 +1,12 @@
 <script setup lang="ts">
-// AGENTS.md §0: 主题切换器以外的复杂主题一律不做 — 只 1 个胶囊 toggle
+// AGENTS.md §0: 主题切换器以外的复杂主题一律不做
 // AGENTS.md §5 #8: 暗色下 outlined 边框刺眼；这里用 flat（无边框、半透明底）
 // AGENTS.md §2: 这个组件归 layout/，由 app.vue 引用
-// 单元 4 Todo 2: 固定磨砂导航只保留四通道链接 + 主题切换，品牌/Bilibili 留给 hero。
-import { computed } from 'vue'
+// 单元 4 Todo 2: 固定磨砂导航只保留通道链接，品牌/Bilibili 留给 hero。
+// 2026-10-01 人类决定：站点固定浅色主题，主题切换开关已移除。
 import { useRoute } from 'vue-router'
-import { useTheme } from '@/composables/useTheme'
 
-const { theme, toggle } = useTheme()
 const route = useRoute()
-
-const isDark = computed(() => theme.value === 'dark')
-const themeSwitchLabel = '主题模式'
-const nextLabel = computed(() => (isDark.value ? '切到亮色' : '切到暗色'))
 
 interface NavLink {
   to: string
@@ -67,42 +61,6 @@ const emit = defineEmits<{
         <circle cx="8.5" cy="8.5" r="5.5" />
         <path d="M15 15 18 18" stroke-linecap="round" />
       </svg>
-    </button>
-
-    <!-- Theme toggle -->
-    <button
-      type="button"
-      class="theme-toggle"
-      :class="{ 'is-dark': isDark }"
-      role="switch"
-      :aria-checked="isDark ? 'true' : 'false'"
-      :aria-label="themeSwitchLabel"
-      :title="nextLabel"
-      @click="toggle()"
-    >
-      <span class="theme-toggle__icon theme-toggle__icon--sun" aria-hidden="true">
-        <svg viewBox="0 0 24 24" width="14" height="14">
-          <circle cx="12" cy="12" r="4" fill="currentColor" />
-          <g stroke="currentColor" stroke-width="2" stroke-linecap="round">
-            <line x1="12" y1="2.5" x2="12" y2="5" />
-            <line x1="12" y1="19" x2="12" y2="21.5" />
-            <line x1="2.5" y1="12" x2="5" y2="12" />
-            <line x1="19" y1="12" x2="21.5" y2="12" />
-            <line x1="4.8" y1="4.8" x2="6.6" y2="6.6" />
-            <line x1="17.4" y1="17.4" x2="19.2" y2="19.2" />
-            <line x1="4.8" y1="19.2" x2="6.6" y2="17.4" />
-            <line x1="17.4" y1="6.6" x2="19.2" y2="4.8" />
-          </g>
-        </svg>
-      </span>
-      <span class="theme-toggle__icon theme-toggle__icon--moon" aria-hidden="true">
-        <svg viewBox="0 0 24 24" width="14" height="14">
-          <path
-            d="M20.5 14.5A8.5 8.5 0 0 1 9.5 3.5a0.5 0.5 0 0 0-0.7-0.5 9.5 9.5 0 1 0 12.2 12.2 0.5 0.5 0 0 0-0.5-0.7Z"
-            fill="currentColor"
-          />
-        </svg>
-      </span>
     </button>
     </div>
   </v-app-bar>
@@ -197,82 +155,6 @@ const emit = defineEmits<{
 }
 .search-btn svg {
   display: block;
-}
-
-/* ── 主题切换胶囊 ──────────────────────────────────── */
-.theme-toggle {
-  padding: 0;
-  margin: 0;
-  position: relative;
-  display: inline-flex;
-  flex: 0 0 56px;
-  align-items: center;
-  width: 56px;
-  height: 28px;
-  border: 0;
-  border-radius: 999px;
-  cursor: pointer;
-  background: var(--theme-scrim);
-  color: var(--theme-on-surface);
-  transition: background-color 200ms ease;
-  font: inherit;
-}
-
-.theme-toggle:focus-visible {
-  outline: 2px solid var(--theme-primary);
-  outline-offset: 2px;
-}
-
-/* 滑块 */
-.theme-toggle::before {
-  content: '';
-  position: absolute;
-  top: 3px;
-  left: 3px;
-  width: 22px;
-  height: 22px;
-  border-radius: 999px;
-  background: var(--theme-surface);
-  box-shadow: var(--theme-shadow-sm);
-  transition: transform 200ms ease;
-}
-
-.theme-toggle.is-dark::before {
-  transform: translateX(28px);
-}
-
-.theme-toggle__icon {
-  position: absolute;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 14px;
-  height: 14px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  opacity: 0.35;
-  transition: opacity 200ms ease, color 200ms ease;
-}
-
-.theme-toggle__icon--sun {
-  left: 7px;
-}
-.theme-toggle__icon--moon {
-  right: 7px;
-}
-
-.theme-toggle .theme-toggle__icon--sun {
-  opacity: 0.25;
-}
-.theme-toggle .theme-toggle__icon--moon {
-  opacity: 0.25;
-}
-
-.theme-toggle:not(.is-dark) .theme-toggle__icon--sun {
-  opacity: 1;
-}
-.theme-toggle.is-dark .theme-toggle__icon--moon {
-  opacity: 1;
 }
 
 @media (max-width: 640px) {

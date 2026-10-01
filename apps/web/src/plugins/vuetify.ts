@@ -5,7 +5,8 @@ import { lightTheme, darkTheme } from '../../app.config'
 
 export const vuetify = createVuetify({
   theme: {
-    defaultTheme: 'dark',
+    // 站点固定浅色主题（2026-10-01）：深色入口已禁用，见 src/composables/useTheme.ts
+    defaultTheme: 'light',
     themes: { light: lightTheme, dark: darkTheme }
   },
   defaults: {

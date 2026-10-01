@@ -7,25 +7,21 @@
     <link rel="icon" href="/favicon.ico" type="image/x-icon">
     <meta name="description" content="个人博客 · 极客风骨架">
     <!--
-      Boot bootstrap. Runs before any bundle so the persisted theme is on <html>
+      Boot bootstrap. Runs before any bundle so the light theme is on <html>
       before first paint, and so the unit-7 startup splash can be gated without
-      a flash. The storage keys are duplicated here on purpose (this script
-      cannot import); keep them in sync with src/styles/tokens.ts
-      (THEME_STORAGE_KEY / BOOT_SPLASH_STORAGE_KEY).
+      a flash. The splash storage key is duplicated here on purpose (this script
+      cannot import); keep it in sync with src/styles/tokens.ts
+      (BOOT_SPLASH_STORAGE_KEY).
     -->
     <script>
       (() => {
-        const THEME_KEY = 'amuboke-no.zero:theme'
         const SPLASH_KEY = 'amuboke-no.zero:boot-splash'
         const root = document.documentElement
 
-        let theme = 'dark'
-        try {
-          const saved = window.localStorage.getItem(THEME_KEY)
-          if (saved === 'light' || saved === 'dark') theme = saved
-        } catch (_) {}
-        root.classList.add('v-theme--' + theme)
-        root.style.colorScheme = theme
+        // 站点固定浅色主题（2026-10-01 人类决定）：不再读取持久化偏好，
+        // 也不再允许 v-theme--dark。首绘前就写死浅色，杜绝任何深色闪烁。
+        root.classList.add('v-theme--light')
+        root.style.colorScheme = 'light'
 
         // Unit 7: the startup splash plays once per tab session. Deciding it here
         // (before paint) is what makes a refresh skip it with zero flash.

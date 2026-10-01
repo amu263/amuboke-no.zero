@@ -1,18 +1,22 @@
 // AGENTS.md §9.3: composable 必须以 use 开头
-// AGENTS.md §9.5: 路径/阈值不硬编码在客户端 → key 抽成常量
-// AGENTS.md §5 #9: dark/light 两边都显式（值在 tokens.ts，这里只切 name）
+// AGENTS.md §9.5: 路径/阈值不硬编码在客户端
+// AGENTS.md §5 #9: dark/light 两边都显式（值在 tokens.ts）
 //
-// useTheme 暴露三个东西：
-//   - theme       : 当前主题名（响应式）
-//   - set(name)   : 设成指定主题，并持久化
-//   - toggle()    : dark ↔ light 切换
+// 2026-10-01 人类决定：站点固定浅色主题，深色入口已禁用。
+//   - 不再读取 / 写入 localStorage 偏好；
+//   - 不再暴露 set / toggle（AppBar 的切换开关同步移除）；
+//   - Vuetify name 与 <html> 根类恒为 light。
+// tokens.ts 里 light/dark 两套 palette 与 app.config.ts 的两套主题定义
+// 仍然保留，未来若要恢复深色，只需在这里与 index.html 引导脚本里放开。
 //
 // 它不直接调用 useTheme()，而是返回一个工厂 useTheme()
-// 调用站点：const { theme, toggle, set } = useTheme()
+// 调用站点：const { theme, palette } = useTheme()
 
-import { computed, onMounted, ref, watch } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { useTheme as useVuetifyTheme } from 'vuetify'
-import { palettes, THEME_STORAGE_KEY, type ThemeName } from '@/styles/tokens'
+import { palettes, type ThemeName } from '@/styles/tokens'
+
+const LIGHT: ThemeName = 'light'
 
 // 把主题类挂到 <html> 上（Vuetify 3 默认只挂到 .v-application）。
 // body 在 .v-application 外，body 需要 <html> 上有 .v-theme--* 类才能消费
@@ -24,36 +28,8 @@ function syncRootClass(name: ThemeName): void {
   html.classList.toggle('v-theme--dark', name === 'dark')
 }
 
-function isThemeName(v: unknown): v is ThemeName {
-  return v === 'light' || v === 'dark'
-}
-
-function readPersisted(): ThemeName | null {
-  // AGENTS.md §9.5: 客户端硬编码路径/阈值是禁止行为；localStorage key 走常量
-  try {
-    const raw = window.localStorage.getItem(THEME_STORAGE_KEY)
-    return isThemeName(raw) ? raw : null
-  } catch {
-    // SSR / 隐私模式 / 被禁用的 storage → 忽略
-    return null
-  }
-}
-
-function persist(name: ThemeName): void {
-  try {
-    window.localStorage.setItem(THEME_STORAGE_KEY, name)
-  } catch {
-    // ignore
-  }
-}
-
-// 单例：所有调用 useTheme() 的组件共享同一个 state
-// 初始化顺序：
-//   1. SSR 阶段（无 window）→ 默认 'dark'
-//   2. 客户端首次 setup → 同步读 localStorage，仅同步状态/根类（HTML 已在首绘前设类）
-//   3. mounted 后再应用 Vuetify name，避免 SSG 默认主题与 hydration 结构冲突
-//   4. 任何后续对 Vuetify theme 的修改 → 反向同步进 current + persist
-const current = ref<ThemeName>('dark')
+// 单例：所有调用 useTheme() 的组件共享同一 state。
+const current = ref<ThemeName>(LIGHT)
 let bound = false
 
 export function useTheme() {
@@ -62,54 +38,23 @@ export function useTheme() {
   if (!bound) {
     bound = true
 
-    // 客户端首次进入：同步读取状态；Vuetify name 延迟到 mounted，保持 hydration 稳定。
+    // 客户端首次 setup：同步状态与根类（HTML 引导脚本已在首绘前设好 light）。
     if (typeof window !== 'undefined') {
-      const saved = readPersisted()
-      const initial: ThemeName = saved ?? 'dark'
-      // The HTML bootstrap already selected the persisted class before paint.
-      // Keep Vuetify's SSR name stable through hydration; switch it after mount.
-      current.value = initial
-      syncRootClass(initial)
+      syncRootClass(LIGHT)
     }
 
+    // mounted 后再应用 Vuetify name，避免 SSG 默认主题与 hydration 结构冲突。
     onMounted(() => {
       vuetifyTheme.global.name.value = current.value
       syncRootClass(current.value)
-    })
-
-    // 任何方式改变 Vuetify 主题（其它组件 / 调试器 / HMR）都同步进 current
-    watch(
-      () => vuetifyTheme.global.name.value,
-      (n) => {
-        if (isThemeName(n) && n !== current.value) {
-          current.value = n
-          if (typeof window !== 'undefined') {
-            persist(n)
-            syncRootClass(n)
-          }
-        }
+      if (typeof window !== 'undefined') {
+        document.documentElement.style.colorScheme = current.value
       }
-    )
-  }
-
-  function set(name: ThemeName): void {
-    vuetifyTheme.global.name.value = name
-    current.value = name
-    if (typeof window !== 'undefined') {
-      persist(name)
-      syncRootClass(name)
-      document.documentElement.style.colorScheme = name
-    }
-  }
-
-  function toggle(): void {
-    set(current.value === 'dark' ? 'light' : 'dark')
+    })
   }
 
   return {
     theme: computed<ThemeName>(() => current.value),
-    palette: computed(() => palettes[current.value]),
-    set,
-    toggle
+    palette: computed(() => palettes[current.value])
   }
 }

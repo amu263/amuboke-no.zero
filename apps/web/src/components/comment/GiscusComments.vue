@@ -40,7 +40,7 @@ function loadGiscus() {
   script.setAttribute('data-reactions-enabled', giscusConfig.reactionsEnabled)
   script.setAttribute('data-emit-metadata', giscusConfig.emitMetadata)
   script.setAttribute('data-input-position', giscusConfig.inputPosition)
-  script.setAttribute('data-theme', 'transparent_dark')
+  script.setAttribute('data-theme', getThemeUrl(theme.value === 'dark'))
   script.setAttribute('data-lang', giscusConfig.lang)
   script.setAttribute('data-loading', 'lazy')
   script.crossOrigin = 'anonymous'
