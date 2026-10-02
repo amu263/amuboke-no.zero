@@ -1,5 +1,7 @@
 import type { Plugin } from 'vite'
+import { existsSync } from 'node:fs'
 import { readFile } from 'node:fs/promises'
+import { basename, dirname, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import matter from 'gray-matter'
 import { marked } from 'marked'
@@ -74,6 +76,27 @@ renderer.code = ({ text, lang, escaped }: TokensCode) => {
 // full @types/marked here; the field shape is the only contract we rely on.
 type TokensCode = { text?: string; lang?: string; escaped?: boolean }
 
+// ── 文章抬头横幅（banner）—— 目录约定，不碰源文件 frontmatter ────────────────
+// 约定：`public/images/posts/<slug>/banner.(png|jpg|jpeg|webp|avif)` 存在时，
+// 构建期自动把它挂为该文章的抬头横幅。这样从外部导入的文章（frontmatter 里
+// 没有 cover / 没有路径字段）只要图片按目录放好，就能显示抬头横幅。
+// 返回的是 public 资源 URL（原样交给浏览器，浏览器自行做百分号编码）。
+const POST_BANNER_EXTENSIONS = ['png', 'jpg', 'jpeg', 'webp', 'avif'] as const
+
+const PROJECT_ROOT = (() => {
+  const fromFile = resolve(dirname(fileURLToPath(import.meta.url)), '../..')
+  return existsSync(join(fromFile, 'src', 'content', 'posts')) ? fromFile : process.cwd()
+})()
+
+export function resolvePostBanner(slug: string): string | undefined {
+  if (!slug) return undefined
+  for (const ext of POST_BANNER_EXTENSIONS) {
+    const rel = `/images/posts/${slug}/banner.${ext}`
+    if (existsSync(join(PROJECT_ROOT, 'public', rel.replace(/^\//, '')))) return rel
+  }
+  return undefined
+}
+
 function splitId(id: string): { path: string; query: string | undefined } {
   const qIdx = id.indexOf('?')
   if (qIdx < 0) return { path: id, query: undefined }
@@ -101,12 +124,18 @@ export default function markdown(): Plugin {
       const { path, query } = splitId(id)
       if (!path.endsWith('.md')) return null
 
+      const slug = basename(path).replace(/\.md$/, '')
+      // 抬头横幅：目录约定自动挂载（见 resolvePostBanner）。有 banner 时并入
+      // frontmatter，页面壳统一从 frontmatter 读取，不需要额外的数据源。
+      const banner = resolvePostBanner(slug)
+
       if (query === 'frontmatter') {
         const { data, content } = matter(code)
+        const frontmatter = banner ? { ...data, banner } : data
         const html = marked.parse(content, { async: false, renderer }) as string
         return {
           code:
-            `export const frontmatter = ${JSON.stringify(data)};\n` +
+            `export const frontmatter = ${JSON.stringify(frontmatter)};\n` +
             `export const html = ${JSON.stringify(html)};\n` +
             `export default { frontmatter, html };\n`,
           map: null
@@ -117,8 +146,9 @@ export default function markdown(): Plugin {
         // 默认形态：用 @vue/compiler-sfc 自编译 SFC → import-analysis 能直接吃的 JS。
         // AGENTS.md §5 #17
         const { data, content } = matter(code)
+        const frontmatter = banner ? { ...data, banner } : data
         const html = marked.parse(content, { async: false, renderer }) as string
-        const safeFrontmatter = JSON.stringify(data)
+        const safeFrontmatter = JSON.stringify(frontmatter)
         const safeHtml = JSON.stringify(html)
         const sfcSource = `
 <template>

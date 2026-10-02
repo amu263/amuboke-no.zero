@@ -19,7 +19,11 @@ const props = withDefaults(
 )
 
 const sortedPosts = computed(() =>
-  [...POSTS].sort((a, b) => String(b.date ?? '').localeCompare(String(a.date ?? '')))
+  [...POSTS].sort((a, b) => {
+    // 永久置顶优先，其次按日期倒序
+    if (a.pinned !== b.pinned) return a.pinned ? -1 : 1
+    return String(b.date ?? '').localeCompare(String(a.date ?? ''))
+  })
 )
 </script>
 
@@ -41,6 +45,7 @@ const sortedPosts = computed(() =>
           <article class="post-item">
             <header class="post-item__header">
               <MetaLine :date="post.date" :tags="(post.tags ?? []).slice(0, 4)" />
+              <MonoChip v-if="post.pinned" accent>置顶</MonoChip>
             </header>
             <h2 class="post-item__title">{{ post.title ?? post.slug }}</h2>
             <p v-if="post.summary" class="post-item__summary">{{ post.summary }}</p>
@@ -103,6 +108,10 @@ const sortedPosts = computed(() =>
 }
 
 .post-item__header {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem;
   margin-bottom: 0.25rem;
 }
 

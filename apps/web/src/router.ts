@@ -156,7 +156,7 @@ export function registerSeoGuard(router: any) {
         meta = {
           title: post.title ?? slug,
           description: post.summary ?? '',
-          ogImage: post.cover,
+          ogImage: post.cover ?? post.banner,
           fullTitle: post.title ? `${post.title} | AMU LIVE STYLE` : `${slug} | AMU LIVE STYLE`,
         }
       }

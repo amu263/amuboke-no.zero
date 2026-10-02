@@ -7,7 +7,7 @@ import { readFileSync, readdirSync } from 'node:fs'
 import { join, dirname } from 'node:path'
 import matter from 'gray-matter'
 import type { ViteSSGOptions } from 'vite-ssg'
-import Markdown from './src/plugins/markdown-loader'
+import Markdown, { resolvePostBanner } from './src/plugins/markdown-loader'
 
 // ── Per-post SEO: read frontmatter from markdown files using Node.js ──────────────────────────────────
 // This runs at config time (Node.js), not via import.meta.glob which doesn't work in config files.
@@ -19,9 +19,22 @@ const contentDir = join(__dirname, 'src/content/posts')
 interface PostSeoMeta {
   title?: string
   date?: string
+  /** 外部导入文章：date 缺失时的回退 */
+  published_at?: string | Date
+  created_at?: string | Date
   tags?: string[]
   cover?: string
   summary?: string
+  /** 外部导入文章：summary 缺失时的回退 */
+  description?: string
+}
+
+// gray-matter parses YAML dates as Date objects; handle both string and Date
+function toSeoDate(value: string | Date | undefined): string | undefined {
+  if (!value) return undefined
+  if (typeof value === 'string') return value.slice(0, 10)
+  if (typeof value === 'object' && 'toISOString' in value) return value.toISOString().slice(0, 10)
+  return undefined
 }
 
 // Read all .md files in the posts directory
@@ -36,20 +49,12 @@ function loadPostSeoMap(): Record<string, { title: string; description: string; 
       const { data } = matter(raw)
       const fm = data as PostSeoMeta
       const routePath = `/posts/${slug}`
-      // gray-matter parses YAML dates as Date objects; handle both string and Date
-      let dateStr: string | undefined
-      if (fm.date) {
-        if (typeof fm.date === 'string') {
-          dateStr = fm.date.slice(0, 10)
-        } else if (fm.date && typeof fm.date === 'object' && 'toISOString' in fm.date) {
-          dateStr = (fm.date as Date).toISOString().slice(0, 10)
-        }
-      }
+      const dateStr = toSeoDate(fm.date) ?? toSeoDate(fm.published_at) ?? toSeoDate(fm.created_at)
       seoMap[routePath] = {
         title: fm.title ? `${fm.title} | AMU LIVE STYLE` : `${slug} | AMU LIVE STYLE`,
-        description: fm.summary ?? '',
+        description: fm.summary ?? fm.description ?? '',
         date: dateStr,
-        cover: fm.cover,
+        cover: fm.cover || resolvePostBanner(slug),
         tags: fm.tags
       }
     }

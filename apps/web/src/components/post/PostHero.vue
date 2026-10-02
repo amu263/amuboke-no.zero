@@ -15,6 +15,7 @@ const props = withDefaults(
 )
 
 const hasCover = computed(() => Boolean(props.post.cover))
+const hasBanner = computed(() => Boolean(props.post.banner))
 </script>
 
 <template>
@@ -22,7 +23,11 @@ const hasCover = computed(() => Boolean(props.post.cover))
     
     <!-- ========== CARD variant (默认) ========== -->
     <template v-if="variant === 'card'">
-      <div v-if="hasCover" class="post-hero__cover">
+      <!-- 抬头横幅：目录约定自动挂载，完整显示（不裁剪） -->
+      <div v-if="hasBanner" class="post-hero__banner">
+        <img :src="post.banner" :alt="post.title ?? post.slug" />
+      </div>
+      <div v-else-if="hasCover" class="post-hero__cover">
         <img :src="post.cover" :alt="post.title ?? post.slug" />
       </div>
       <div class="post-hero__body">
@@ -129,6 +134,21 @@ const hasCover = computed(() => Boolean(props.post.cover))
   height: 100%;
   object-fit: cover;
   display: block;
+}
+
+/* 抬头横幅：完整显示整张图（不裁剪、不固定比例），宽度占满内容列 */
+.post-hero__banner {
+  width: 100%;
+  overflow: hidden;
+  border-radius: var(--theme-radius-lg);
+  border: 1px solid var(--theme-border);
+  background: var(--theme-surface);
+}
+.post-hero__banner img {
+  display: block;
+  width: 100%;
+  height: auto;
+  object-fit: contain;
 }
 
 .post-hero__body {

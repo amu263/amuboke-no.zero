@@ -39,16 +39,39 @@ export type {
 export interface PostFrontmatter {
   title?: string
   date?: string
+  /** 外部导入文章：发布日期 / 创建时间（date 缺失时的回退，见 AGENTS §3） */
+  published_at?: string
+  created_at?: string
   tags?: string[]
   cover?: string
+  /** 抬头横幅：构建期按 public/images/posts/<slug>/banner.* 目录约定自动挂载 */
+  banner?: string
   summary?: string
+  /** 外部导入文章：description 作为 summary 的回退 */
+  description?: string
+  /** 永久置顶：列表与首页「最新文章」都排在最前 */
+  pinned?: boolean
   channels?: readonly string[]
 }
 export interface PostMeta extends PostFrontmatter {
   slug: string
   channels?: readonly Channel[]
+  pinned: boolean
   /** 构建期定型：markdown 渲染后的 HTML 字符串。页面壳直接 v-html。 */
   html: string
+}
+
+function toIsoDate(value: unknown): string | undefined {
+  if (value instanceof Date) return value.toISOString().slice(0, 10)
+  if (typeof value === 'string' && value.trim() !== '') return value.slice(0, 10)
+  return undefined
+}
+
+function firstText(...values: unknown[]): string | undefined {
+  for (const value of values) {
+    if (typeof value === 'string' && value.trim() !== '') return value
+  }
+  return undefined
 }
 
 const postModules = import.meta.glob<{ frontmatter: PostFrontmatter; html: string }>(
@@ -59,18 +82,27 @@ const postModules = import.meta.glob<{ frontmatter: PostFrontmatter; html: strin
 const POSTS_RAW: PostMeta[] = Object.entries(postModules)
   .map(([path, mod]) => {
     const slug = path.split('/').pop()?.replace(/\.md$/, '') ?? path
+    const fm: PostFrontmatter = mod.frontmatter ?? {}
     return {
       slug,
       html: mod.html ?? '',
-      title: mod.frontmatter?.title,
-      date: mod.frontmatter.date?.slice(0, 10),
-      tags: mod.frontmatter?.tags ?? [],
-      cover: mod.frontmatter?.cover,
-      summary: mod.frontmatter?.summary,
-      channels: parseChannels(mod.frontmatter?.channels)
+      title: fm.title,
+      // date 缺失时回退到外部导入文章的 published_at / created_at
+      date: toIsoDate(fm.date ?? fm.published_at ?? fm.created_at),
+      tags: fm.tags ?? [],
+      cover: firstText(fm.cover),
+      banner: firstText(fm.banner),
+      // summary 缺失时回退到外部导入文章的 description
+      summary: firstText(fm.summary, fm.description),
+      pinned: fm.pinned === true || String(fm.pinned) === 'true',
+      channels: parseChannels(fm.channels)
     }
   })
-  .sort((a, b) => String(b.date ?? '').localeCompare(String(a.date ?? '')))
+  // 永久置顶优先，其次按日期倒序（AGENTS §3）
+  .sort((a, b) => {
+    if (a.pinned !== b.pinned) return a.pinned ? -1 : 1
+    return String(b.date ?? '').localeCompare(String(a.date ?? ''))
+  })
 
 /** 构建期定型：posts 全量列表。运行时不再触发 glob / parse。 */
 export const POSTS: readonly PostMeta[] = Object.freeze(POSTS_RAW)

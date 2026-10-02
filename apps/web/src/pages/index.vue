@@ -157,7 +157,10 @@ const socialLinks = [
             prompt=">"
           >
             <div class="post-item">
-              <MetaLine :date="post.date" :tags="(post.tags ?? []).slice(0, 3)" />
+              <div class="post-item__head">
+                <MetaLine :date="post.date" :tags="(post.tags ?? []).slice(0, 3)" />
+                <MonoChip v-if="post.pinned" accent>置顶</MonoChip>
+              </div>
               <h3 class="post-item__title">{{ post.title ?? post.slug }}</h3>
               <p v-if="post.summary" class="post-item__summary">{{ post.summary }}</p>
               <GlowButton variant="ghost" size="sm" :to="'/posts/' + post.slug">阅读全文</GlowButton>
@@ -366,6 +369,7 @@ const socialLinks = [
 .home-page__section { margin-bottom: var(--theme-spacing-xl); }
 .home-page__posts, .home-page__projects { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: var(--theme-spacing-md); margin-bottom: var(--theme-spacing-md); }
 .post-item, .project-item { display: flex; flex-direction: column; gap: 0.5rem; }
+.post-item__head { display: flex; align-items: center; flex-wrap: wrap; gap: 0.4rem; }
 .post-item__title, .project-item__name { font-size: var(--theme-font-size-lg); font-weight: 600; color: var(--theme-on-surface); margin: 0; }
 .post-item__summary, .project-item__summary { font-size: var(--theme-font-size-sm); opacity: 0.7; line-height: 1.5; flex: 1; }
 .project-item__header { display: flex; justify-content: space-between; align-items: center; gap: 0.5rem; }
