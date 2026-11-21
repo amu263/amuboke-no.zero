@@ -325,19 +325,65 @@ const CLASSIC_POST_SLUGS = {
 function classicSlug(slug) {
   return CLASSIC_POST_SLUGS[slug] || slug
 }
-// 当前 ZZZ 页面 → 经典站对应路由（导航按钮的 no-JS 兜底 href）。
-function classicHrefFor(urlPath = '') {
-  const p = String(urlPath).replace(/^\/+/, '')
-  if (!p || p === 'index.html' || p === '404.html') return '/'
-  // 经典站的路由在 Cloudflare Pages 上以目录形式发布，统一带尾斜杠，
-  // 避免 308 跳转把切换动画的导航变成一次额外跳转。
-  if (p === 'about/') return '/posts/about-me/'
-  if (p === 'archive/') return '/posts/'
-  let m = p.match(/^posts\/([^/]+)\/$/)
-  if (m) return '/posts/' + encodeURIComponent(classicSlug(decodeURIComponent(m[1]))) + '/'
-  if (/^(gallery|listen)\/[^/]+\/$/.test(p)) return '/' + p.replace(/\/+$/, '') + '/'
-  if (/^projects\/[^/]+\/$/.test(p)) return '/projects/'
-  return '/' + p.replace(/\/+$/, '') + '/'
+// 当前主题页 → 目标主题对应路由（主题选择器的 no-JS 兜底 href）。
+const CURRENT_THEME = 'zzz'
+const THEME_META = {
+  classic: { cn: '经典档案', en: 'CLASSIC' },
+  zzz: { cn: '新艾利都', en: 'ZZZ' },
+  genshin: { cn: '提瓦特', en: 'TEYVAT' },
+}
+function themeHrefFor(target, urlPath = '') {
+  let p = String(urlPath).replace(/^\/+/, '').replace(/index\.html$/, '').replace(/\/+$/, '')
+  if (p === 'archive') p = 'posts'
+  if (p === 'about/') p = 'about'
+  if (p === 'posts/about-me') p = 'about'
+
+  if (target === 'classic') {
+    if (!p) return '/'
+    if (p === 'about') return '/posts/about-me/'
+    if (p === 'posts') return '/posts/'
+    if (p.startsWith('posts/')) return '/posts/' + encodeURIComponent(classicSlug(decodeURIComponent(p.slice(6)))) + '/'
+    if (p === 'gallery' || p.startsWith('gallery/') || p === 'listen' || p.startsWith('listen/')) return '/' + p + '/'
+    if (p === 'projects' || p.startsWith('projects/')) return '/projects/'
+    if (p === 'friends') return '/friends/'
+    return '/'
+  }
+
+  const base = target === 'zzz' ? '/zzz/' : '/genshin/'
+  if (!p) return base
+  if (p === 'about') return base + 'about/'
+  if (p === 'posts') return base + 'posts/'
+  if (p.startsWith('posts/')) return base + 'posts/' + encodeURIComponent(p.slice(6)) + '/'
+  if (p === 'gallery' || p.startsWith('gallery/') || p === 'listen' || p.startsWith('listen/')) return base + p + '/'
+  if (p === 'projects' || p.startsWith('projects/')) return base + 'projects/'
+  if (p === 'friends') return base + 'friends/'
+  return base
+}
+function themePickerHtml(depth, current, urlPath) {
+  const options = ['classic', 'zzz', 'genshin'].map((id) => {
+    const m = THEME_META[id]
+    const active = id === current
+    return `<a class="theme-picker__option${active ? ' is-active' : ''}" role="menuitem" href="${themeHrefFor(id, urlPath)}" data-theme-option="${id}"${active ? ' aria-current="true"' : ''}>
+      <i class="theme-dot theme-dot--${id}${active ? ' is-current' : ''}" aria-hidden="true"></i>
+      <span class="theme-picker__cn">${m.cn}</span>
+      <span class="theme-picker__en">${m.en}</span>
+      ${active ? '<span class="theme-picker__now">当前</span>' : ''}
+    </a>`
+  }).join('')
+  return `<div class="theme-picker" data-theme-picker data-current="${current}">
+    <button class="theme-picker__trigger" type="button" aria-haspopup="menu" aria-expanded="false" aria-label="切换主题：经典档案 / 新艾利都 / 提瓦特" title="切换主题">
+      <span class="theme-picker__dots" aria-hidden="true"><i class="theme-dot theme-dot--classic"></i><i class="theme-dot theme-dot--zzz is-current"></i><i class="theme-dot theme-dot--genshin"></i></span>
+      <span class="theme-picker__label">主题</span>
+      <svg class="theme-picker__chev" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8"><path d="m6 9 6 6 6-6"/></svg>
+    </button>
+    <div class="theme-picker__menu" role="menu" aria-label="选择主题" hidden>${options}</div>
+  </div>`
+}
+function themeMenuHtml(depth, current, urlPath) {
+  return ['classic', 'zzz', 'genshin'].map((id) => {
+    const m = THEME_META[id]
+    return `<a class="mmenu__link" href="${themeHrefFor(id, urlPath)}" data-theme-option="${id}"${id === current ? ' aria-current="true"' : ''}><b>00</b><span>${m.cn}</span><i>${m.en}</i></a>`
+  }).join('')
 }
 // 主题切换落地页：读取上一页写进 sessionStorage 的圆心，注入跨文档 View Transition 的
 // 圆形裁切动画。必须放在 <head> 里同步执行，动画才能在首帧生效。
@@ -353,16 +399,18 @@ var canMask=(window.CSS&&CSS.supports&&CSS.supports('mask-image','radial-gradien
 if(!canMask)return;
 var x=Number(d.x)||0,y=Number(d.y)||0;
 var r=Number(d.r)||Math.hypot(Math.max(x,window.innerWidth-x),Math.max(y,window.innerHeight-y));
-var from=d.from==='classic'?'classic':'zzz';
-var oldBg=from==='classic'?'#f0f2f5':'#0a0a0a';
+var from=d.from==='classic'?'classic':d.from==='genshin'?'genshin':'zzz';
+var oldBg=from==='classic'?'#f0f2f5':from==='genshin'?'#0b1220':'#0a0a0a';
 var oldPattern=from==='classic'
   ?'repeating-linear-gradient(to right, rgba(165,192,212,.35) 0 2px, transparent 2px 28px), repeating-linear-gradient(to bottom, rgba(165,192,212,.35) 0 2px, transparent 2px 28px)'
-  :'radial-gradient(circle at 85% 15%, rgba(226,58,30,.18), transparent 55%)';
+  :from==='genshin'
+    ?'radial-gradient(circle at 18% 10%, rgba(95,208,176,.14), transparent 42%), radial-gradient(circle at 82% 4%, rgba(211,188,142,.14), transparent 40%), radial-gradient(1px 1px at 24px 36px, rgba(247,242,230,.65) 0 1px, transparent 1.6px)'
+    :'radial-gradient(circle at 85% 15%, rgba(226,58,30,.18), transparent 55%)';
 var overlay=document.createElement('div');
 overlay.setAttribute('aria-hidden','true');
 overlay.style.cssText='position:fixed;inset:0;z-index:2147483600;pointer-events:none;'+
 'background-color:'+oldBg+';background-image:'+oldPattern+';'+
-'background-size:'+(from==='classic'?'28px 28px':'auto')+';'+
+'background-size:'+(from==='classic'?'28px 28px':from==='genshin'?'auto, auto, 340px 340px':'auto')+';'+
 '-webkit-mask-image:radial-gradient(circle at '+x+'px '+y+'px, transparent 0px, transparent 0px, #000 0.5px);'+
 'mask-image:radial-gradient(circle at '+x+'px '+y+'px, transparent 0px, transparent 0px, #000 0.5px)';
 document.documentElement.appendChild(overlay);
@@ -428,11 +476,7 @@ function navHtml(depth, active, urlPath = '') {
       </a>
       <nav class="nav__links" aria-label="主导航">${links}</nav>
       <div class="nav__tools">
-        <a class="theme-switch" href="${classicHrefFor(urlPath)}" data-theme-switch aria-label="切换到经典主题 AMU LIVE STYLE" title="切换到经典主题">
-          <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M12 3.5a8.5 8.5 0 0 1 0 17z" fill="currentColor"/></svg>
-          <span class="theme-switch__label">CLASSIC</span>
-          <i class="theme-switch__dot" aria-hidden="true"></i>
-        </a>
+        ${themePickerHtml(depth, CURRENT_THEME, urlPath)}
         <button class="iconbtn" type="button" data-search-open aria-label="搜索全站" aria-haspopup="dialog">${ICON.search}</button>
         <a class="nav__cta" href="${rel(depth, 'posts/')}">调阅档案${ICON.arrow}</a>
         <button class="nav__burger iconbtn" type="button" data-menu-toggle aria-expanded="false" aria-controls="mobile-menu" aria-label="打开菜单">${ICON.menu}</button>
@@ -446,7 +490,7 @@ function navHtml(depth, active, urlPath = '') {
     </div>
     <nav class="mmenu__nav" aria-label="移动导航">
       ${NAV.map((n) => `<a class="mmenu__link" href="${rel(depth, n.href)}"><b>${n.num}</b><span>${n.cn}</span><i>${n.en}</i></a>`).join('')}
-      <a class="mmenu__link" href="${classicHrefFor(urlPath)}" data-theme-switch><b>00</b><span>经典主题</span><i>CLASSIC</i></a>
+      ${themeMenuHtml(depth, CURRENT_THEME, urlPath)}
     </nav>
     <p class="mmenu__foot">NEW ERIDU / PERSONAL ARCHIVE<br><span>RECORDS · IMAGES · SOUND · CONNECTIONS</span></p>
   </div>`

@@ -14,85 +14,122 @@
   const $ = (sel, root = document) => root.querySelector(sel)
   const $$ = (sel, root = document) => [...root.querySelectorAll(sel)]
 
-  // ZZZ 文章 slug → 经典站 slug（只有这两篇换过名字）
-  const CLASSIC_POST_SLUGS = {
-    about: 'about-me',
-    'gei-luoluo-de-yi-feng-xin': '给洛洛的一封信',
+  // 当前主题与三主题目标
+  const CURRENT = 'zzz'
+  const THEME_FAVICON = {
+    classic: '/favicon.ico',
+    zzz: '/zzz/assets/img/favicon.svg',
+    genshin: '/genshin/assets/img/favicon.svg',
+  }
+  const THEME_COLOR = {
+    classic: '#f0f2f5',
+    zzz: '#0a0a0a',
+    genshin: '#0b1220',
+  }
+  const THEME_ASSETS = {
+    genshin: [
+      '/genshin/assets/css/genshin-tokens.css',
+      '/genshin/assets/css/genshin.css',
+      '/genshin/assets/css/genshin-bridge.css',
+      '/genshin/assets/js/site.js',
+      '/genshin/assets/js/theme-bridge.js',
+    ],
   }
 
-  // 当前 /zzz/... 地址 → 经典站同义路由
-  function classicPath(pathname) {
-    let p = pathname.replace(/^\/zzz(?=\/|$)/, '') || '/'
-    if (p === '/') return '/'
-    // 经典站是目录式静态页，统一带尾斜杠，避免 Cloudflare Pages 的 308。
-    if (p === '/about/' || p === '/about') return '/posts/about-me/'
-    if (p === '/archive/' || p === '/archive') return '/posts/'
-    let m = p.match(/^\/posts\/([^/]+)\/?$/)
-    if (m) {
-      const slug = decodeURIComponent(m[1])
-      return '/posts/' + encodeURIComponent(CLASSIC_POST_SLUGS[slug] || slug) + '/'
-    }
-    if (/^\/(gallery|listen)\/[^/]+\/?$/.test(p)) return p.replace(/\/+$/, '') + '/'
-    if (/^\/projects\/[^/]+\/?$/.test(p)) return '/projects/'
-    return p.replace(/\/+$/, '') + '/'
-  }
-
-  function getSwitchPayload(btn, to) {
-    const rect = btn.getBoundingClientRect()
-    const x = rect.left + rect.width / 2
-    const y = rect.top + rect.height / 2
-    return {
-      x,
-      y,
-      r: Math.hypot(Math.max(x, window.innerWidth - x), Math.max(y, window.innerHeight - y)),
-      sy: window.scrollY || 0,
-      from: 'zzz',
-      to,
-    }
-  }
-
-  function setFavicon(href) {
+  function setFavicon(target) {
+    const href = THEME_FAVICON[target]
+    if (!href) return
     document.querySelectorAll('link[rel="icon"], link[rel="shortcut icon"]').forEach((el) => el.remove())
     const link = document.createElement('link')
     link.rel = 'icon'
+    if (href.endsWith('.svg')) link.type = 'image/svg+xml'
     link.href = href
     document.head.appendChild(link)
   }
 
-  function goClassic(url, btn) {
+  function setThemeColor(target) {
+    const meta = document.querySelector('meta[name="theme-color"]')
+    if (meta && THEME_COLOR[target]) meta.setAttribute('content', THEME_COLOR[target])
+  }
+
+  function switchTheme(option, trigger) {
+    const target = option?.dataset.themeOption
+    if (!target || target === CURRENT) return
+    const url = option.getAttribute('href')
+    if (!url) return
     // 首访启动帘幕还在时按钮不可见；避免把帘幕截进圆形快照。
     if (document.documentElement.classList.contains('booting')) return
-    btn.classList.add('is-switching')
-    window.setTimeout(() => btn.classList.remove('is-switching'), 2500)
-    const payload = getSwitchPayload(btn, 'classic')
+    const rect = trigger.getBoundingClientRect()
+    const x = rect.left + rect.width / 2
+    const y = rect.top + rect.height / 2
+    const payload = {
+      x,
+      y,
+      r: Math.hypot(Math.max(x, window.innerWidth - x), Math.max(y, window.innerHeight - y)),
+      sy: window.scrollY || 0,
+      from: CURRENT,
+      to: target,
+    }
     try {
       window.sessionStorage.setItem('amu-theme-switch', JSON.stringify(payload))
-      // 经典站的首访帘幕与 ZZZ 的启动帘幕都跳过：主题切换要无缝
-      window.sessionStorage.setItem('amuboke-no.zero:boot-splash', '1')
       window.sessionStorage.setItem('amu-boot', '1')
+      if (target === 'classic') window.sessionStorage.setItem('amuboke-no.zero:boot-splash', '1')
     } catch { /* 隐私模式：退化为普通导航 */ }
-    setFavicon('/favicon.ico')
-    const themeColor = document.querySelector('meta[name="theme-color"]')
-    if (themeColor) themeColor.setAttribute('content', '#f0f2f5')
+    setFavicon(target)
+    setThemeColor(target)
     // 圆扩散在目标页的 arrival 脚本里完成；这里只负责记录圆心并导航。
     window.location.assign(url)
   }
 
-  const switchBtns = $$('[data-theme-switch]')
-  if (switchBtns.length) {
-    const target = classicPath(window.location.pathname)
-    let prefetched = false
-    const prefetch = () => {
-      if (prefetched) return
-      prefetched = true
-      const docLink = document.createElement('link')
-      docLink.rel = 'prefetch'
-      docLink.as = 'document'
-      docLink.href = target
-      document.head.appendChild(docLink)
-      // 目标页是带 hash 的 Vue bundle：先读 HTML 再预热 css/js，
-      // 这样第一次切回经典站时新页面已经就绪，圆形动画不会被慢加载拖成“没效果”。
-      fetch(target, { credentials: 'same-origin' })
+  /* -------- 三主题选择器 -------- */
+  const picker = $('[data-theme-picker]')
+  const trigger = picker ? $('.theme-picker__trigger', picker) : null
+  const menu = picker ? $('.theme-picker__menu', picker) : null
+  const options = $$('[data-theme-option]')
+
+  const closeMenu = () => {
+    if (!picker || !menu) return
+    picker.classList.remove('is-open')
+    menu.hidden = true
+    trigger?.setAttribute('aria-expanded', 'false')
+  }
+  const toggleMenu = () => {
+    if (!picker || !menu || !trigger) return
+    const open = menu.hidden
+    picker.classList.toggle('is-open', open)
+    menu.hidden = !open
+    trigger.setAttribute('aria-expanded', open ? 'true' : 'false')
+    if (open) $('[data-theme-option]', menu)?.focus()
+  }
+
+  if (picker && menu && trigger) {
+    trigger.addEventListener('click', (e) => { e.preventDefault(); toggleMenu() })
+    trigger.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') { closeMenu(); trigger.focus() }
+    })
+    document.addEventListener('click', (e) => {
+      if (!picker.contains(e.target)) closeMenu()
+    })
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && !menu.hidden) { closeMenu(); trigger.focus() }
+    })
+  }
+
+  let prefetched = new Set()
+  function prefetchTarget(target) {
+    if (!target || target === CURRENT || prefetched.has(target)) return
+    prefetched.add(target)
+    const option = options.find((o) => o.dataset.themeOption === target)
+    const url = option?.getAttribute('href')
+    if (!url) return
+    const docLink = document.createElement('link')
+    docLink.rel = 'prefetch'
+    docLink.as = 'document'
+    docLink.href = url
+    document.head.appendChild(docLink)
+    if (target === 'classic') {
+      // 经典站是带 hash 的 Vue bundle：读 HTML 再预热 css/js。
+      fetch(url, { credentials: 'same-origin' })
         .then((res) => res.text())
         .then((html) => {
           const doc = new DOMParser().parseFromString(html, 'text/html')
@@ -109,19 +146,30 @@
           })
         })
         .catch(() => { /* 预取失败不影响切换 */ })
+    } else {
+      for (const href of THEME_ASSETS[target] || []) {
+        const link = document.createElement('link')
+        link.rel = 'prefetch'
+        link.as = href.endsWith('.js') ? 'script' : 'style'
+        link.href = href
+        document.head.appendChild(link)
+      }
     }
-    switchBtns.forEach((btn) => {
-      btn.setAttribute('href', target)
-      btn.addEventListener('click', (e) => {
-        e.preventDefault()
-        goClassic(target, btn)
-      })
-      btn.addEventListener('pointerenter', prefetch)
-      btn.addEventListener('focus', prefetch)
-      btn.addEventListener('pointerdown', prefetch)
-      btn.addEventListener('touchstart', prefetch, { passive: true })
-    })
   }
+
+  options.forEach((option) => {
+    const target = option.dataset.themeOption
+    option.addEventListener('click', (e) => {
+      if (target === CURRENT) { e.preventDefault(); closeMenu(); return }
+      e.preventDefault()
+      closeMenu()
+      if (trigger) switchTheme(option, trigger)
+    })
+    option.addEventListener('pointerenter', () => prefetchTarget(target))
+    option.addEventListener('focus', () => prefetchTarget(target))
+    option.addEventListener('pointerdown', () => prefetchTarget(target))
+    option.addEventListener('touchstart', () => prefetchTarget(target), { passive: true })
+  })
 
   /* -------- 文章页：点赞 -------- */
   const likeBtn = $('[data-like]')

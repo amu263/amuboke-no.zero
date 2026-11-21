@@ -16,21 +16,22 @@
 | Markdown | 自写轻量 loader (.md + frontmatter) |
 | 包管理 | pnpm |
 
-## 主题切换（经典 ↔ ZZZ）
+## 三主题切换（经典 ↔ ZZZ ↔ 提瓦特）
 
-站点现在有两套完整主题，右上角按钮切换：
+站点现在有三套完整主题，右上角三主题选择器切换：
 
 - **经典站** `/`：Vue 3 + Vuetify 3 + Vite SSG，浅色极客风。
 - **ZZZ 主题** `/zzz/`：纯 HTML / CSS / JS，绝区零视觉语言；源在 `apps/web/zzz/`。
+- **提瓦特主题** `/genshin/`：纯 HTML / CSS / JS，夜幕星海 + 风元素 + 金箔的「原神 UI」个人视觉研究；源在 `apps/web/genshin/`。
 
-点击右上角 `ZZZ` / `CLASSIC` 时，以按钮中心为圆心做圆形扩散：落地页先铺旧主题底色，再用 CSS mask 圆形挖洞把新页面露出来；不依赖 View Transition，所有支持 mask 的浏览器每次切换都一致。两个主题的按钮固定在视口同一位置、同一尺寸/形状（桌面 116×34、移动 44×34），切换时不会移动；滚动位置在切换前后保持。站点动效（首屏帘幕、ZZZ 页面 wipe、滚动 reveal、视差、路由加载环、主题圆扩散）按站点主人要求保留，不随系统“减少动态效果”降级；详见 docs/motion。文章、图集、音轨、项目、友链、关于各路由一一对应；文章页保留点赞 + Giscus 评论；favicon / theme-color 随主题切换。两套主题共用 `public/images`、`public/img` 的图片，切换命中缓存，不重复下载。
+点击右上角主题选择器（三个圆点 + 主题）时，以按钮中心为圆心做圆形扩散：落地页先铺旧主题底色，再用 CSS mask 圆形挖洞把新页面露出来；不依赖 View Transition，所有支持 mask 的浏览器每次切换都一致。三个主题的按钮固定在视口同一位置、同一尺寸/形状（桌面 116×34、移动 44×34），切换时不会移动；滚动位置在切换前后保持。站点动效（首屏帘幕、ZZZ 页面 wipe、滚动 reveal、视差、路由加载环、主题圆扩散）按站点主人要求保留，不随系统“减少动态效果”降级；详见 docs/motion。文章、图集、音轨、项目、友链、关于各路由一一对应；文章页保留点赞 + Giscus 评论；favicon / theme-color 随主题切换。三套主题共用 `public/images`、`public/img` 的图片，切换命中缓存，不重复下载。提瓦特主题的内容复用 `apps/web/zzz/content/`，不复制文章。
 
 ```bash
 cd apps/web
-pnpm build   # vite-ssg build 之后自动生成 dist/zzz
+pnpm build   # vite-ssg build 之后自动生成 dist/zzz 和 dist/genshin
 ```
 
-Cloudflare Pages 部署的是 `apps/web/dist`，必须包含 `dist/zzz/` 这一层；`pnpm build` 已包含。
+Cloudflare Pages 部署的是 `apps/web/dist`，必须包含 `dist/zzz/` 与 `dist/genshin/`；`pnpm build` 已包含。GitHub Pages 尚未部署：博客仓库没有启用 Pages，`amu263.github.io` 是另一个仓库，需要站长提供部署目标/权限后才能做（项目站点还需要 `/amuboke-no.zero/` base path）。
 
 ## 项目结构
 

@@ -35,18 +35,20 @@
           const r =
             Number(data.r) ||
             Math.hypot(Math.max(x, window.innerWidth - x), Math.max(y, window.innerHeight - y))
-          const from = data.from === 'zzz' ? 'zzz' : 'classic'
-          const oldBg = from === 'zzz' ? '#0a0a0a' : '#f0f2f5'
+          const from = data.from === 'zzz' ? 'zzz' : data.from === 'genshin' ? 'genshin' : 'classic'
+          const oldBg = from === 'zzz' ? '#0a0a0a' : from === 'genshin' ? '#0b1220' : '#f0f2f5'
           const oldPattern =
             from === 'zzz'
               ? 'radial-gradient(circle at 85% 15%, rgba(226,58,30,.18), transparent 55%)'
-              : 'repeating-linear-gradient(to right, rgba(165,192,212,.35) 0 2px, transparent 2px 28px), repeating-linear-gradient(to bottom, rgba(165,192,212,.35) 0 2px, transparent 2px 28px)'
+              : from === 'genshin'
+                ? 'radial-gradient(circle at 18% 10%, rgba(95,208,176,.14), transparent 42%), radial-gradient(circle at 82% 4%, rgba(211,188,142,.14), transparent 40%), radial-gradient(1px 1px at 24px 36px, rgba(247,242,230,.65) 0 1px, transparent 1.6px)'
+                : 'repeating-linear-gradient(to right, rgba(165,192,212,.35) 0 2px, transparent 2px 28px), repeating-linear-gradient(to bottom, rgba(165,192,212,.35) 0 2px, transparent 2px 28px)'
           const overlay = document.createElement('div')
           overlay.setAttribute('aria-hidden', 'true')
           overlay.style.cssText =
             'position:fixed;inset:0;z-index:2147483600;pointer-events:none;' +
             'background-color:' + oldBg + ';background-image:' + oldPattern + ';' +
-            'background-size:' + (from === 'zzz' ? 'auto' : '28px 28px') + ';' +
+            'background-size:' + (from === 'zzz' ? 'auto' : from === 'genshin' ? 'auto, auto, 340px 340px' : '28px 28px') + ';' +
             '-webkit-mask-image:radial-gradient(circle at ' + x + 'px ' + y + 'px, transparent 0px, transparent 0px, #000 0.5px);' +
             'mask-image:radial-gradient(circle at ' + x + 'px ' + y + 'px, transparent 0px, transparent 0px, #000 0.5px)'
           document.documentElement.appendChild(overlay)

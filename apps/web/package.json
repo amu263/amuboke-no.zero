@@ -5,11 +5,12 @@
   "type": "module",
   "scripts": {
     "dev": "vite --host 127.0.0.1 --port 5173",
-    "build": "vite-ssg build && node zzz/scripts/build.mjs",
+    "build": "vite-ssg build && node zzz/scripts/build.mjs && node genshin/scripts/build.mjs",
     "build:ssg": "vite-ssg build",
     "preview": "vite preview --host 127.0.0.1 --port 4173",
     "typecheck": "vue-tsc --noEmit",
-    "build:zzz": "node zzz/scripts/build.mjs"
+    "build:zzz": "node zzz/scripts/build.mjs",
+    "build:genshin": "node genshin/scripts/build.mjs"
   },
   "dependencies": {
     "fuse.js": "^7.0.0",

@@ -155,8 +155,8 @@
     document.addEventListener('click', (e) => {
       const a = e.target.closest('a[href]')
       if (!a || e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return
-      // 主题切换按钮自己接管导航（圆形 View Transition / 帘幕），不要叠一层 wipe。
-      if (a.hasAttribute('data-theme-switch')) return
+      // 主题切换按钮/选项自己接管导航（圆形扩散），不要叠一层 wipe。
+      if (a.hasAttribute('data-theme-switch') || a.hasAttribute('data-theme-option')) return
       if (a.target === '_blank' || a.hasAttribute('download')) return
       const href = a.getAttribute('href')
       if (!href || href.startsWith('#') || href.startsWith('mailto:') || href.startsWith('javascript:')) return
